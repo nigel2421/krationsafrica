@@ -31,8 +31,10 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      console.log("User detected, syncing profile...");
-      syncUserProfile(user).then(() => {
+      // Set a session cookie for UI state consistency
+      document.cookie = "kicks_logged_in=true; path=/; max-age=3600";
+      
+      syncUserProfile(user).finally(() => {
         router.push("/admin/dashboard");
       });
     }
@@ -45,7 +47,9 @@ export default function AdminLogin() {
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        const role = currentUser.email === "nigel2421@gmail.com" ? "admin" : "customer";
+        const admins = ["nigel2421@gmail.com", "nigelandahua@outlook.com"];
+        const role = admins.includes(currentUser.email) ? "admin" : "customer";
+        
         await setDoc(userRef, {
           id: currentUser.uid,
           email: currentUser.email,
@@ -54,14 +58,10 @@ export default function AdminLogin() {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-        console.log("Profile created with role:", role);
       }
     } catch (e: any) {
-      console.error("Profile sync failed:", e);
-      // We don't block the redirect for nigel as rules have email fallback
-      if (currentUser.email !== "nigel2421@gmail.com") {
-        setAuthError({ message: "Failed to initialize profile. Check your connection.", code: e.code });
-      }
+      console.warn("Profile sync background warning:", e.message);
+      // We don't block login if sync fails, as rules have email fallback
     }
   };
 
@@ -76,7 +76,6 @@ export default function AdminLogin() {
         setLoading(false);
         return;
       }
-      console.error("Auth Error:", error.code, error.message);
       let message = "Login Failed. Please try again.";
       if (error.code === 'auth/operation-not-allowed') {
         message = "Google Sign-In is not enabled in your Firebase Console.";
