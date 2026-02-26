@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,14 +15,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Chrome, Mail, Lock, AlertCircle } from "lucide-react";
+import { Loader2, Chrome, Mail, Lock, AlertCircle, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<{message: string, code: string} | null>(null);
   
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -68,14 +69,14 @@ export default function AdminLogin() {
       let message = "Login Failed. Please try again.";
       
       if (error.code === 'auth/operation-not-allowed') {
-        message = "Google Sign-In is not enabled in your Firebase Console.";
+        message = "Google Sign-In is not enabled in your Firebase Console. Enable it in Authentication > Sign-in method.";
       } else if (error.code === 'auth/unauthorized-domain') {
-        message = "This domain is not authorized for Firebase Auth. Add it in the Firebase Console settings.";
+        message = "This domain is not authorized. You must add it to the 'Authorized domains' list in your Firebase Console settings.";
       } else if (error.code === 'auth/popup-closed-by-user') {
         message = "Login popup was closed before completion.";
       }
       
-      setAuthError(message);
+      setAuthError({ message, code: error.code });
       toast({ title: "Login Failed", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -91,7 +92,7 @@ export default function AdminLogin() {
       await syncUserProfile(result.user);
       router.push("/admin/dashboard");
     } catch (error: any) {
-      setAuthError("Invalid credentials or account does not exist.");
+      setAuthError({ message: "Invalid credentials or account does not exist.", code: error.code });
       toast({ title: "Error", description: "Invalid credentials.", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -115,10 +116,21 @@ export default function AdminLogin() {
         </CardHeader>
         <CardContent className="pt-8 space-y-6">
           {authError && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border-2">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Authentication Error</AlertTitle>
-              <AlertDescription>{authError}</AlertDescription>
+              <AlertTitle className="font-black uppercase text-xs">Action Required</AlertTitle>
+              <AlertDescription className="text-xs font-medium">
+                {authError.message}
+                {authError.code === 'auth/unauthorized-domain' && (
+                  <div className="mt-2">
+                    <Button variant="link" className="p-0 h-auto text-xs text-destructive underline font-bold" asChild>
+                      <a href="https://console.firebase.google.com/project/kreation254/authentication/settings" target="_blank" rel="noopener noreferrer">
+                        Open Firebase Console <ExternalLink className="ml-1 h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </AlertDescription>
             </Alert>
           )}
 
