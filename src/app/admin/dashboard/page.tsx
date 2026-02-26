@@ -5,7 +5,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
 import { useAuth, useFirestore, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -177,11 +177,11 @@ export default function AdminDashboard() {
     } catch (e: any) {
       console.error("AI Generation Error:", e);
       let msg = "AI generation failed. Please try again later.";
-      if (e.message?.includes("403") || e.message?.includes("disabled")) {
-        msg = "Generative Language API is disabled. Please enable it in the Google Cloud Console.";
+      if (e.message?.includes("403") || e.message?.includes("blocked") || e.message?.includes("disabled")) {
+        msg = "Generative Language API is blocked or disabled. You must enable it in the Google Cloud Console to use AI features.";
       }
       setAiError(msg);
-      toast({ title: "AI Failed", description: msg, variant: "destructive" });
+      toast({ title: "AI Tool Blocked", description: "Please check your API settings.", variant: "destructive" });
     } finally {
       setIsAiGenerating(false);
     }
@@ -203,13 +203,27 @@ export default function AdminDashboard() {
             <LayoutDashboard className="h-8 w-8 text-secondary" />
             <h1 className="text-2xl font-black tracking-tight uppercase">Admin CMS</h1>
           </div>
-          <Button variant="ghost" className="text-white hover:bg-white/10" onClick={() => signOut(auth)}>
-            <LogOut className="mr-2 h-5 w-5" /> Logout
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" asChild className="bg-white/10 border-white/20 hover:bg-white/20 text-white">
+              <a href="/test">System Health</a>
+            </Button>
+            <Button variant="ghost" className="text-white hover:bg-white/10" onClick={() => signOut(auth)}>
+              <LogOut className="mr-2 h-5 w-5" /> Logout
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 mt-12">
+        {/* Ad blocker warning */}
+        <Alert className="mb-8 border-yellow-500/50 bg-yellow-500/5">
+          <Info className="h-4 w-4 text-yellow-600" />
+          <AlertTitle className="text-yellow-800">Note for Developers</AlertTitle>
+          <AlertDescription className="text-yellow-700 text-xs">
+            If you see "ERR_BLOCKED_BY_CLIENT" in the console or Firestore permissions errors, please **disable your Ad-Blocker** for this domain. Ad-blockers often interfere with Firebase's real-time communication.
+          </AlertDescription>
+        </Alert>
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h2 className="text-3xl font-black text-primary">Inventory Management</h2>
