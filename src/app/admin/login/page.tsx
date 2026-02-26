@@ -65,6 +65,12 @@ export default function AdminLogin() {
       toast({ title: "Welcome back!" });
       router.push("/admin/dashboard");
     } catch (error: any) {
+      // If the user simply closed the popup, don't show a scary error message
+      if (error.code === 'auth/popup-closed-by-user') {
+        setLoading(false);
+        return;
+      }
+
       console.error("Auth Error:", error.code, error.message);
       let message = "Login Failed. Please try again.";
       
@@ -72,8 +78,6 @@ export default function AdminLogin() {
         message = "Google Sign-In is not enabled in your Firebase Console. Enable it in Authentication > Sign-in method.";
       } else if (error.code === 'auth/unauthorized-domain') {
         message = "This domain is not authorized. You must add it to the 'Authorized domains' list in your Firebase Console settings.";
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        message = "Login popup was closed before completion.";
       }
       
       setAuthError({ message, code: error.code });
