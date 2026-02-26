@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useAuth, useFirestore, useUser } from "@/firebase";
+import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,13 @@ import { generateProductDescription } from "@/ai/flows/admin-product-description
 const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
 
 export default function AdminDashboard() {
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
+  const auth = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const [products, setProducts] = useState<any[]>([]);
-  const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -42,21 +47,15 @@ export default function AdminDashboard() {
     imageUrl: "",
     availableSizes: [] as string[],
   });
-  
-  const router = useRouter();
-  const { toast } = useToast();
 
+  // Protect the route
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuth(true);
-        fetchProducts();
-      } else {
-        router.push("/admin/login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+    if (!isUserLoading && !user) {
+      router.push("/admin/login");
+    } else if (user && db) {
+      fetchProducts();
+    }
+  }, [user, isUserLoading, router, db]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -171,7 +170,13 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAuth) return null;
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-secondary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/20 pb-20">
@@ -283,7 +288,6 @@ export default function AdminDashboard() {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column: Core Info */}
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -362,7 +366,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Right Column: Visuals & Stock */}
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Stock Availability</Label>

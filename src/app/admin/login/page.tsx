@@ -30,29 +30,36 @@ export default function AdminLogin() {
   const router = useRouter();
   const { toast } = useToast();
 
+  // Robust redirect logic: If user is logged in, move to dashboard
   useEffect(() => {
     if (!isUserLoading && user) {
+      console.log("User detected, redirecting to dashboard...");
       router.push("/admin/dashboard");
     }
   }, [user, isUserLoading, router]);
 
   const syncUserProfile = async (user: any) => {
-    const userRef = doc(db, "userProfiles", user.uid);
-    const userSnap = await getDoc(userRef);
+    try {
+      const userRef = doc(db, "userProfiles", user.uid);
+      const userSnap = await getDoc(userRef);
 
-    if (!userSnap.exists()) {
-      const role = user.email === "nigel2421@gmail.com" ? "admin" : "customer";
-      await setDoc(userRef, {
-        id: user.uid,
-        email: user.email,
-        name: user.displayName || "Customer",
-        role: role,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      return role;
+      if (!userSnap.exists()) {
+        const role = user.email === "nigel2421@gmail.com" ? "admin" : "customer";
+        await setDoc(userRef, {
+          id: user.uid,
+          email: user.email,
+          name: user.displayName || "Customer",
+          role: role,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        return role;
+      }
+      return userSnap.data()?.role;
+    } catch (e) {
+      console.error("Profile sync failed:", e);
+      return null;
     }
-    return userSnap.data()?.role;
   };
 
   const handleGoogleLogin = async () => {
@@ -61,11 +68,11 @@ export default function AdminLogin() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
+      // Ensure profile exists immediately after login
       await syncUserProfile(result.user);
-      toast({ title: "Welcome back!" });
-      router.push("/admin/dashboard");
+      toast({ title: "Authenticating...", description: "Setting up your workspace." });
+      // The useEffect will handle the final redirect
     } catch (error: any) {
-      // If the user simply closed the popup, don't show a scary error message
       if (error.code === 'auth/popup-closed-by-user') {
         setLoading(false);
         return;
@@ -75,9 +82,9 @@ export default function AdminLogin() {
       let message = "Login Failed. Please try again.";
       
       if (error.code === 'auth/operation-not-allowed') {
-        message = "Google Sign-In is not enabled in your Firebase Console. Enable it in Authentication > Sign-in method.";
+        message = "Google Sign-In is not enabled in your Firebase Console.";
       } else if (error.code === 'auth/unauthorized-domain') {
-        message = "This domain is not authorized. You must add it to the 'Authorized domains' list in your Firebase Console settings.";
+        message = "This domain is not authorized. Add it to 'Authorized domains' in Firebase Settings.";
       }
       
       setAuthError({ message, code: error.code });
@@ -94,7 +101,6 @@ export default function AdminLogin() {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       await syncUserProfile(result.user);
-      router.push("/admin/dashboard");
     } catch (error: any) {
       setAuthError({ message: "Invalid credentials or account does not exist.", code: error.code });
       toast({ title: "Error", description: "Invalid credentials.", variant: "destructive" });
