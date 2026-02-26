@@ -5,6 +5,7 @@ import { useUser, useFirestore, useFirebaseApp } from "@/firebase";
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, XCircle, ShieldCheck, Database, Globe } from "lucide-react";
 
 export default function TestPage() {
@@ -32,7 +33,12 @@ export default function TestPage() {
   return (
     <div className="min-h-screen bg-muted/10 py-20">
       <div className="container mx-auto px-4 max-w-2xl">
-        <h1 className="text-4xl font-black mb-8 text-primary uppercase">System Diagnostics</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-black text-primary uppercase">System Diagnostics</h1>
+          <Button variant="ghost" asChild>
+            <a href="/admin/dashboard">Back to Dashboard</a>
+          </Button>
+        </div>
         
         <div className="grid gap-6">
           <Card>
