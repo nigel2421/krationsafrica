@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
-import { useAuth, useFirestore, useUser } from "@/firebase";
+import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle, Info } from "lucide-react";
@@ -29,8 +30,6 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -49,28 +48,18 @@ export default function AdminDashboard() {
     availableSizes: [] as string[],
   });
 
+  const productsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, "products"), orderBy("createdAt", "desc"));
+  }, [db]);
+
+  const { data: products, isLoading: productsLoading } = useCollection(productsQuery);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/admin/login");
-    } else if (user && db) {
-      fetchProducts();
     }
-  }, [user, isUserLoading, router, db]);
-
-  const fetchProducts = async () => {
-    if (!db) return;
-    setLoading(true);
-    try {
-      const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProducts(items);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, isUserLoading, router]);
 
   const toggleSize = (size: string) => {
     setForm(prev => ({
@@ -104,7 +93,6 @@ export default function AdminDashboard() {
 
       setDialogOpen(false);
       resetForm();
-      fetchProducts();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -150,7 +138,6 @@ export default function AdminDashboard() {
     if (confirm("Are you sure you want to delete this product?")) {
       try {
         await deleteDoc(doc(db, "products", id));
-        fetchProducts();
         toast({ title: "Product Deleted" });
       } catch (e: any) {
         toast({ title: "Delete Failed", description: e.message, variant: "destructive" });
@@ -215,7 +202,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 mt-12">
-        {/* Ad blocker warning */}
         <Alert className="mb-8 border-yellow-500/50 bg-yellow-500/5">
           <Info className="h-4 w-4 text-yellow-600" />
           <AlertTitle className="text-yellow-800">Note for Developers</AlertTitle>
@@ -238,7 +224,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white dark:bg-card rounded-2xl border shadow-sm overflow-hidden">
-          {loading ? (
+          {productsLoading ? (
             <div className="p-20 flex flex-col items-center justify-center gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-secondary" />
               <p className="font-bold text-muted-foreground">Loading inventory...</p>
@@ -257,7 +243,7 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
+                  {products?.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell>
                         <div className="relative h-14 w-14 rounded-lg overflow-hidden border bg-muted">
