@@ -14,12 +14,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Chrome, Mail, Lock } from "lucide-react";
+import { Loader2, Chrome, Mail, Lock, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -54,6 +56,7 @@ export default function AdminLogin() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setAuthError(null);
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -61,7 +64,19 @@ export default function AdminLogin() {
       toast({ title: "Welcome back!" });
       router.push("/admin/dashboard");
     } catch (error: any) {
-      toast({ title: "Login Failed", description: error.message, variant: "destructive" });
+      console.error("Auth Error:", error.code, error.message);
+      let message = "Login Failed. Please try again.";
+      
+      if (error.code === 'auth/operation-not-allowed') {
+        message = "Google Sign-In is not enabled in your Firebase Console.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        message = "This domain is not authorized for Firebase Auth. Add it in the Firebase Console settings.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        message = "Login popup was closed before completion.";
+      }
+      
+      setAuthError(message);
+      toast({ title: "Login Failed", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -70,12 +85,14 @@ export default function AdminLogin() {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setAuthError(null);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       await syncUserProfile(result.user);
       router.push("/admin/dashboard");
     } catch (error: any) {
-      toast({ title: "Error", description: "Invalid credentials or account does not exist.", variant: "destructive" });
+      setAuthError("Invalid credentials or account does not exist.");
+      toast({ title: "Error", description: "Invalid credentials.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -97,6 +114,14 @@ export default function AdminLogin() {
           <CardDescription className="text-white/70">Secure Access Portal</CardDescription>
         </CardHeader>
         <CardContent className="pt-8 space-y-6">
+          {authError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertDescription>{authError}</AlertDescription>
+            </Alert>
+          )}
+
           <Button 
             variant="outline"
             className="w-full h-14 font-bold flex items-center justify-center gap-3 border-2 hover:bg-muted/50 transition-all text-lg"
