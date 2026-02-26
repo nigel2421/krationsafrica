@@ -35,7 +35,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-body antialiased bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground">
+      <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground">
         <FirebaseClientProvider>
           <CartProvider>
             <Navbar />
