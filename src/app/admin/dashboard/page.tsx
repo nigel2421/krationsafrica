@@ -5,7 +5,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTi
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle, Info } from "lucide-react";
+import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle, Info, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
     return query(collection(db, "products"), orderBy("createdAt", "desc"));
   }, [db]);
 
-  const { data: products, isLoading: productsLoading } = useCollection(productsQuery);
+  const { data: products, isLoading: productsLoading, error: productsError } = useCollection(productsQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -201,13 +201,18 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 mt-12">
-        <Alert className="mb-8 border-yellow-500/50 bg-yellow-500/5">
-          <Info className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">Note for Developers</AlertTitle>
-          <AlertDescription className="text-yellow-700 text-xs">
-            If you see "ERR_BLOCKED_BY_CLIENT" in the console or Firestore permissions errors, please **disable your Ad-Blocker** for this domain. Ad-blockers often interfere with Firebase's real-time communication.
-          </AlertDescription>
-        </Alert>
+        {productsError && (
+          <Alert variant="destructive" className="mb-8">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Database Sync Error</AlertTitle>
+            <AlertDescription className="text-xs">
+              {productsError.message}
+              <div className="mt-2">
+                <p className="font-bold">Recommendation: Disable any Ad-Blockers for this domain and refresh.</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
@@ -306,13 +311,13 @@ export default function AdminDashboard() {
             {aiError && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>AI Action Required</AlertTitle>
+                <AlertTitle>AI Tool Blocked</AlertTitle>
                 <AlertDescription className="text-xs">
                   {aiError}
                   <div className="mt-2">
                     <Button variant="link" className="p-0 h-auto text-xs text-destructive underline font-bold" asChild>
                       <a href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=782503041956" target="_blank">
-                        Enable Generative Language API
+                        Enable Generative Language API <ExternalLink className="ml-1 h-3 w-3" />
                       </a>
                     </Button>
                   </div>

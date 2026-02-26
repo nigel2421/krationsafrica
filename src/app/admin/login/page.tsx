@@ -29,9 +29,11 @@ export default function AdminLogin() {
   const router = useRouter();
   const { toast } = useToast();
 
+  // Centralized redirect logic
   useEffect(() => {
     if (!isUserLoading && user) {
-      // Set a session cookie for UI state consistency
+      console.log("User detected, syncing profile...");
+      // Set a session cookie hint for immediate UI feedback on reload
       document.cookie = "kicks_logged_in=true; path=/; max-age=3600";
       
       syncUserProfile(user).finally(() => {
@@ -44,9 +46,15 @@ export default function AdminLogin() {
     if (!db || !currentUser) return;
     try {
       const userRef = doc(db, "userProfiles", currentUser.uid);
-      const userSnap = await getDoc(userRef);
+      // We use a try-catch specifically for the getDoc to handle rule propagation delays
+      let userSnap;
+      try {
+        userSnap = await getDoc(userRef);
+      } catch (e) {
+        console.warn("Profile sync read check skipped (rules propagation):", e);
+      }
 
-      if (!userSnap.exists()) {
+      if (!userSnap?.exists()) {
         const admins = ["nigel2421@gmail.com", "nigelandahua@outlook.com"];
         const role = admins.includes(currentUser.email) ? "admin" : "customer";
         
@@ -57,11 +65,11 @@ export default function AdminLogin() {
           role: role,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-        });
+        }, { merge: true });
       }
     } catch (e: any) {
       console.warn("Profile sync background warning:", e.message);
-      // We don't block login if sync fails, as rules have email fallback
+      // We don't block login if sync fails, as rules have email fallback for admins
     }
   };
 
