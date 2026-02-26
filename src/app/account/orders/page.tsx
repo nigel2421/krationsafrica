@@ -3,7 +3,7 @@
 import React from "react";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
-import { Loader2, Package, Calendar, MapPin, Receipt, ExternalLink } from "lucide-react";
+import { Loader2, Package, Calendar, MapPin, Receipt, ExternalLink, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,48 @@ export default function CustomerOrders() {
   }, [db, user]);
 
   const { data: orders, isLoading: isOrdersLoading } = useCollection(ordersQuery);
+
+  const handlePrintReceipt = (order: any) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const itemsHtml = order.items?.map((item: string) => `<li>${item}</li>`).join('') || '';
+    const date = order.orderedAt?.seconds ? new Date(order.orderedAt.seconds * 1000).toLocaleDateString() : 'N/A';
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt - Order ${order.id}</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; }
+            .header { text-align: center; margin-bottom: 40px; }
+            .details { margin-bottom: 20px; }
+            .items { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .items th, .items td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            .total { text-align: right; font-size: 1.5em; font-weight: bold; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>KREATION 254</h1>
+            <p>Official Purchase Receipt</p>
+          </div>
+          <div class="details">
+            <p><strong>Order ID:</strong> ${order.id}</p>
+            <p><strong>Date:</strong> ${date}</p>
+            <p><strong>Customer:</strong> ${order.customerName}</p>
+            <p><strong>Phone:</strong> ${order.customerPhoneNumber}</p>
+            <p><strong>Location:</strong> ${order.deliveryLocation}</p>
+          </div>
+          <h3>Items:</h3>
+          <ul>${itemsHtml}</ul>
+          <div class="total">Total: KES ${order.totalAmount?.toLocaleString()}</div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   if (isUserLoading || isOrdersLoading) {
     return (
@@ -63,7 +105,7 @@ export default function CustomerOrders() {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        {new Date(order.orderedAt?.seconds * 1000).toLocaleDateString()}
+                        {order.orderedAt?.seconds ? new Date(order.orderedAt.seconds * 1000).toLocaleDateString() : 'Recent'}
                       </div>
                     </div>
                     <Badge className="px-4 py-1 text-sm font-bold capitalize">
@@ -101,12 +143,12 @@ export default function CustomerOrders() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1 font-bold gap-2">
+                        <Button variant="outline" className="flex-1 font-bold gap-2" onClick={() => handlePrintReceipt(order)}>
                           <Receipt className="h-4 w-4" />
-                          View Receipt
+                          Print Receipt
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground">
-                          <ExternalLink className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="text-muted-foreground" asChild>
+                           <a href={`/shop`} target="_blank"><ExternalLink className="h-4 w-4" /></a>
                         </Button>
                       </div>
                     </div>
