@@ -41,6 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
           src={product.imageUrl}
           alt={product.name}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           className="object-cover transition-transform duration-700 group-hover:scale-110"
           data-ai-hint="product shoe"
         />

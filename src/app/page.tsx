@@ -43,6 +43,7 @@ export default function Home() {
             fill
             className="object-cover brightness-[0.4]"
             priority
+            sizes="100vw"
             data-ai-hint="luxury sneakers"
           />
         </div>
@@ -55,12 +56,14 @@ export default function Home() {
               Nairobi's premier destination for high-performance footwear and exclusive luxury sneakers. Curated for the bold.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="h-16 px-10 text-xl font-black uppercase bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-none">
-                Explore Shop
-                <ShoppingBag className="ml-3 h-6 w-6" />
+              <Button asChild size="lg" className="h-16 px-10 text-xl font-black uppercase bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-none">
+                <Link href="/shop">
+                  Explore Shop
+                  <ShoppingBag className="ml-3 h-6 w-6" />
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="h-16 px-10 text-xl font-black uppercase border-white text-white hover:bg-white hover:text-black rounded-none">
-                New Arrivals
+              <Button asChild size="lg" variant="outline" className="h-16 px-10 text-xl font-black uppercase border-white text-white hover:bg-white hover:text-black rounded-none">
+                <Link href="/shop?filter=new">New Arrivals</Link>
               </Button>
             </div>
           </div>
@@ -105,6 +108,7 @@ export default function Home() {
                   src={cat.image || ""}
                   alt={cat.name}
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -128,8 +132,10 @@ export default function Home() {
               <h2 className="text-5xl font-black text-primary tracking-tighter uppercase mb-2">New Arrivals</h2>
               <p className="text-muted-foreground font-bold text-lg">Fresh styles from the world's leading footwear innovators.</p>
             </div>
-            <Button variant="link" className="text-secondary font-black text-xl p-0 hover:no-underline hover:opacity-80">
-              VIEW ALL COLLECTION <ArrowRight className="ml-2 h-6 w-6" />
+            <Button asChild variant="link" className="text-secondary font-black text-xl p-0 hover:no-underline hover:opacity-80">
+              <Link href="/shop">
+                VIEW ALL COLLECTION <ArrowRight className="ml-2 h-6 w-6" />
+              </Link>
             </Button>
           </div>
           
@@ -174,6 +180,7 @@ export default function Home() {
                 src="https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop" 
                 alt="Quality Craftsmanship" 
                 fill 
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover" 
               />
             </div>
@@ -247,10 +254,10 @@ export default function Home() {
             <div>
               <h4 className="font-black text-xl mb-8 uppercase tracking-widest text-secondary">Collections</h4>
               <ul className="space-y-4 text-white/50 font-bold text-sm uppercase tracking-widest">
-                <li><Link href="/shop?cat=sneakers" className="hover:text-white transition-colors">Sneakers</Link></li>
-                <li><Link href="/shop?cat=boots" className="hover:text-white transition-colors">Boots</Link></li>
-                <li><Link href="/shop?cat=official" className="hover:text-white transition-colors">Official Wear</Link></li>
-                <li><Link href="/shop?cat=kids" className="hover:text-white transition-colors">Kids Edition</Link></li>
+                <li><Link href="/shop?category=sneakers" className="hover:text-white transition-colors">Sneakers</Link></li>
+                <li><Link href="/shop?category=boots" className="hover:text-white transition-colors">Boots</Link></li>
+                <li><Link href="/shop?category=official" className="hover:text-white transition-colors">Official Wear</Link></li>
+                <li><Link href="/shop?category=kids" className="hover:text-white transition-colors">Kids Edition</Link></li>
               </ul>
             </div>
           </div>
