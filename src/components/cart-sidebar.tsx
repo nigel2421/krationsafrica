@@ -1,9 +1,8 @@
-
 "use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Trash2, Minus, Plus, ShoppingCart, MessageCircle } from "lucide-react";
+import { Trash2, Minus, Plus, ShoppingCart, MessageCircle, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useUser, useFirestore } from "@/firebase";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export function CartSidebar() {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
+  const { user } = useUser();
+  const db = useFirestore();
+  const { toast } = useToast();
   const [checkoutStep, setCheckoutStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [details, setDetails] = useState({
     name: "",
     phone: "",
@@ -22,25 +28,52 @@ export function CartSidebar() {
     notes: "",
   });
 
-  const handleWhatsAppCheckout = () => {
-    const storeNumber = "254700000000"; // Replace with real number
-    const itemsList = cart
-      .map((item) => `• ${item.name} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
-      .join("\n");
-    
-    const message = `*New Order from Kreations Kicks*\n\n` +
-      `*Customer Details:*\n` +
-      `Name: ${details.name}\n` +
-      `Phone: ${details.phone}\n` +
-      `Location: ${details.location}\n` +
-      `${details.notes ? `Notes: ${details.notes}\n` : ""}\n` +
-      `*Order Summary:*\n` +
-      `${itemsList}\n\n` +
-      `*Total Amount: KES ${totalPrice.toLocaleString()}*`;
+  const handleWhatsAppCheckout = async () => {
+    setIsSubmitting(true);
+    try {
+      const storeNumber = "254700000000"; // Replace with real number
+      const itemsList = cart
+        .map((item) => `• ${item.name} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
+        .join("\n");
+      
+      const orderData = {
+        customerName: details.name,
+        customerPhoneNumber: details.phone,
+        deliveryLocation: details.location,
+        specialNotes: details.notes,
+        items: cart.map(i => `${i.name} (x${i.quantity})`),
+        totalAmount: totalPrice,
+        orderStatus: "Pending",
+        orderedAt: serverTimestamp(),
+        whatsappMessageSent: true,
+        userId: user?.uid || "anonymous",
+      };
 
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${storeNumber}?text=${encodedMessage}`, "_blank");
-    clearCart();
+      // Save order to Firestore if logged in
+      if (user && db) {
+        const orderRef = doc(collection(db, "userProfiles", user.uid, "orders"));
+        await setDoc(orderRef, { ...orderData, id: orderRef.id });
+      }
+
+      const message = `*New Order from Kreations Kicks*\n\n` +
+        `*Customer Details:*\n` +
+        `Name: ${details.name}\n` +
+        `Phone: ${details.phone}\n` +
+        `Location: ${details.location}\n` +
+        `${details.notes ? `Notes: ${details.notes}\n` : ""}\n` +
+        `*Order Summary:*\n` +
+        `${itemsList}\n\n` +
+        `*Total Amount: KES ${totalPrice.toLocaleString()}*`;
+
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/${storeNumber}?text=${encodedMessage}`, "_blank");
+      clearCart();
+      toast({ title: "Order Placed!", description: "Opening WhatsApp for confirmation." });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -57,21 +90,12 @@ export function CartSidebar() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold">Your Shopping Cart</h2>
-        <p className="text-sm text-muted-foreground">
-          {totalItems} {totalItems === 1 ? "item" : "items"} in your cart
-        </p>
-      </div>
-
-      <Separator />
-
       <ScrollArea className="flex-1 p-6">
         {checkoutStep === 1 ? (
           <div className="space-y-6">
             {cart.map((item) => (
               <div key={item.id} className="flex gap-4">
-                <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted">
+                <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border">
                   <Image
                     src={item.imageUrl}
                     alt={item.name}
@@ -114,6 +138,11 @@ export function CartSidebar() {
         ) : (
           <div className="space-y-4">
             <h3 className="font-bold text-lg">Delivery Details</h3>
+            {!user && (
+              <div className="p-3 bg-secondary/10 rounded-md text-xs font-medium text-secondary-foreground mb-4">
+                Login to save your orders and view receipts later.
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="name">Full Name</Label>
               <Input 
@@ -157,23 +186,29 @@ export function CartSidebar() {
         )}
       </ScrollArea>
 
-      <div className="p-6 bg-muted/50">
+      <div className="p-6 bg-muted/50 border-t">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-muted-foreground">Total</span>
-          <span className="text-2xl font-bold">KES {totalPrice.toLocaleString()}</span>
+          <span className="text-muted-foreground font-medium">Total Price</span>
+          <span className="text-2xl font-black text-primary">KES {totalPrice.toLocaleString()}</span>
         </div>
         {checkoutStep === 1 ? (
-          <Button onClick={() => setCheckoutStep(2)} className="w-full h-12 text-lg font-bold">
+          <Button onClick={() => setCheckoutStep(2)} className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90">
             Proceed to Checkout
           </Button>
         ) : (
           <Button 
             onClick={handleWhatsAppCheckout} 
-            disabled={!details.name || !details.phone || !details.location}
-            className="w-full h-12 text-lg font-bold bg-[#25D366] hover:bg-[#128C7E] text-white border-none"
+            disabled={!details.name || !details.phone || !details.location || isSubmitting}
+            className="w-full h-14 text-lg font-bold bg-[#25D366] hover:bg-[#128C7E] text-white border-none"
           >
-            <MessageCircle className="mr-2 h-5 w-5" />
-            Order on WhatsApp
+            {isSubmitting ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <>
+                <MessageCircle className="mr-2 h-6 w-6" />
+                Order on WhatsApp
+              </>
+            )}
           </Button>
         )}
       </div>
