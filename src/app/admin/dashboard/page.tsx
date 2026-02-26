@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -6,7 +5,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
 import { useAuth, useFirestore, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { MediaLibrary } from "@/components/admin/media-library";
 import { generateProductDescription } from "@/ai/flows/admin-product-description-generator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
 
@@ -34,6 +34,7 @@ export default function AdminDashboard() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     name: "",
@@ -48,7 +49,6 @@ export default function AdminDashboard() {
     availableSizes: [] as string[],
   });
 
-  // Protect the route
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/admin/login");
@@ -58,6 +58,7 @@ export default function AdminDashboard() {
   }, [user, isUserLoading, router, db]);
 
   const fetchProducts = async () => {
+    if (!db) return;
     setLoading(true);
     try {
       const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
@@ -82,6 +83,7 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!db) return;
     try {
       const slug = form.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const data = {
@@ -110,6 +112,7 @@ export default function AdminDashboard() {
 
   const resetForm = () => {
     setEditingProduct(null);
+    setAiError(null);
     setForm({
       name: "",
       brand: "",
@@ -126,6 +129,7 @@ export default function AdminDashboard() {
 
   const handleEdit = (product: any) => {
     setEditingProduct(product);
+    setAiError(null);
     setForm({
       name: product.name,
       brand: product.brand || "",
@@ -142,9 +146,15 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure?")) {
-      await deleteDoc(doc(db, "products", id));
-      fetchProducts();
+    if (!db) return;
+    if (confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteDoc(doc(db, "products", id));
+        fetchProducts();
+        toast({ title: "Product Deleted" });
+      } catch (e: any) {
+        toast({ title: "Delete Failed", description: e.message, variant: "destructive" });
+      }
     }
   };
 
@@ -154,6 +164,7 @@ export default function AdminDashboard() {
       return;
     }
     setIsAiGenerating(true);
+    setAiError(null);
     try {
       const result = await generateProductDescription({
         shoeName: form.name,
@@ -163,8 +174,14 @@ export default function AdminDashboard() {
       });
       setForm({ ...form, description: result.description });
       toast({ title: "AI Generation Complete" });
-    } catch (e) {
-      toast({ title: "AI Failed", variant: "destructive" });
+    } catch (e: any) {
+      console.error("AI Generation Error:", e);
+      let msg = "AI generation failed. Please try again later.";
+      if (e.message?.includes("403") || e.message?.includes("disabled")) {
+        msg = "Generative Language API is disabled. Please enable it in the Google Cloud Console.";
+      }
+      setAiError(msg);
+      toast({ title: "AI Failed", description: msg, variant: "destructive" });
     } finally {
       setIsAiGenerating(false);
     }
@@ -287,6 +304,15 @@ export default function AdminDashboard() {
             <DialogDescription>Provide comprehensive details to attract more customers.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-8">
+            {aiError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>AI Action Required</AlertTitle>
+                <AlertDescription className="text-xs">
+                  {aiError}
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">

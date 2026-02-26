@@ -1,16 +1,16 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { ref, uploadBytes, getDownloadURL, listAll } from "firebase/storage";
-import { storage, db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, orderBy } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { useFirestore, useStorage } from "@/firebase";
 import { Upload, Check, Loader2, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 interface MediaItem {
   id: string;
@@ -28,9 +28,12 @@ export function MediaLibrary({ onSelect, selectedUrl }: MediaLibraryProps) {
   const [images, setImages] = useState<MediaItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const db = useFirestore();
+  const storage = useStorage();
   const { toast } = useToast();
 
   const fetchMedia = async () => {
+    if (!db) return;
     try {
       const q = query(collection(db, "media"), orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
@@ -39,8 +42,11 @@ export function MediaLibrary({ onSelect, selectedUrl }: MediaLibraryProps) {
         items.push({ id: doc.id, ...doc.data() } as MediaItem);
       });
       setImages(items);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error fetching media", e);
+      if (e.code === 'permission-denied') {
+        toast({ title: "Access Denied", description: "You don't have permission to view media.", variant: "destructive" });
+      }
     } finally {
       setLoading(false);
     }
@@ -48,11 +54,11 @@ export function MediaLibrary({ onSelect, selectedUrl }: MediaLibraryProps) {
 
   useEffect(() => {
     fetchMedia();
-  }, []);
+  }, [db]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !storage || !db) return;
 
     setUploading(true);
     try {
@@ -63,7 +69,7 @@ export function MediaLibrary({ onSelect, selectedUrl }: MediaLibraryProps) {
       await addDoc(collection(db, "media"), {
         url,
         name: file.name,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
 
       toast({ title: "Upload Success", description: "Image added to library." });
@@ -124,6 +130,7 @@ export function MediaLibrary({ onSelect, selectedUrl }: MediaLibraryProps) {
                   src={img.url}
                   alt={img.name}
                   fill
+                  sizes="(max-width: 768px) 33vw, 150px"
                   className="object-cover"
                 />
                 {selectedUrl === img.url && (
@@ -139,5 +146,3 @@ export function MediaLibrary({ onSelect, selectedUrl }: MediaLibraryProps) {
     </div>
   );
 }
-
-import { Label } from "@/components/ui/label";

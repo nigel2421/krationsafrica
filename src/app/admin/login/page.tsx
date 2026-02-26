@@ -29,11 +29,10 @@ export default function AdminLogin() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Robust redirect logic
   useEffect(() => {
     if (!isUserLoading && user) {
-      console.log("User detected, ensuring profile exists before redirect...");
-      syncUserProfile(user).then(() => {
+      console.log("User detected, redirecting to dashboard...");
+      syncUserProfile(user).finally(() => {
         router.push("/admin/dashboard");
       });
     }
