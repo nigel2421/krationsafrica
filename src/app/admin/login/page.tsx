@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,35 +29,36 @@ export default function AdminLogin() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Robust redirect logic: If user is logged in, move to dashboard
+  // Robust redirect logic
   useEffect(() => {
     if (!isUserLoading && user) {
-      console.log("User detected, redirecting to dashboard...");
-      router.push("/admin/dashboard");
+      console.log("User detected, ensuring profile exists before redirect...");
+      syncUserProfile(user).then(() => {
+        router.push("/admin/dashboard");
+      });
     }
   }, [user, isUserLoading, router]);
 
-  const syncUserProfile = async (user: any) => {
+  const syncUserProfile = async (currentUser: any) => {
+    if (!db || !currentUser) return;
     try {
-      const userRef = doc(db, "userProfiles", user.uid);
+      const userRef = doc(db, "userProfiles", currentUser.uid);
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        const role = user.email === "nigel2421@gmail.com" ? "admin" : "customer";
+        const role = currentUser.email === "nigel2421@gmail.com" ? "admin" : "customer";
         await setDoc(userRef, {
-          id: user.uid,
-          email: user.email,
-          name: user.displayName || "Customer",
+          id: currentUser.uid,
+          email: currentUser.email,
+          name: currentUser.displayName || "User",
           role: role,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
-        return role;
+        console.log("Profile created with role:", role);
       }
-      return userSnap.data()?.role;
     } catch (e) {
-      console.error("Profile sync failed:", e);
-      return null;
+      console.error("Profile sync error:", e);
     }
   };
 
@@ -67,26 +67,20 @@ export default function AdminLogin() {
     setAuthError(null);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      // Ensure profile exists immediately after login
-      await syncUserProfile(result.user);
-      toast({ title: "Authenticating...", description: "Setting up your workspace." });
-      // The useEffect will handle the final redirect
+      await signInWithPopup(auth, provider);
+      toast({ title: "Authenticating...", description: "Preparing your profile." });
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         setLoading(false);
         return;
       }
-
       console.error("Auth Error:", error.code, error.message);
       let message = "Login Failed. Please try again.";
-      
       if (error.code === 'auth/operation-not-allowed') {
         message = "Google Sign-In is not enabled in your Firebase Console.";
       } else if (error.code === 'auth/unauthorized-domain') {
-        message = "This domain is not authorized. Add it to 'Authorized domains' in Firebase Settings.";
+        message = "This domain is not authorized in your Firebase Settings.";
       }
-      
       setAuthError({ message, code: error.code });
       toast({ title: "Login Failed", description: message, variant: "destructive" });
     } finally {
@@ -99,11 +93,10 @@ export default function AdminLogin() {
     setLoading(true);
     setAuthError(null);
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      await syncUserProfile(result.user);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
       setAuthError({ message: "Invalid credentials or account does not exist.", code: error.code });
-      toast({ title: "Error", description: "Invalid credentials.", variant: "destructive" });
+      toast({ title: "Error", description: "Login failed.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -134,7 +127,7 @@ export default function AdminLogin() {
                 {authError.code === 'auth/unauthorized-domain' && (
                   <div className="mt-2">
                     <Button variant="link" className="p-0 h-auto text-xs text-destructive underline font-bold" asChild>
-                      <a href="https://console.firebase.google.com/project/kreation254/authentication/settings" target="_blank" rel="noopener noreferrer">
+                      <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">
                         Open Firebase Console <ExternalLink className="ml-1 h-3 w-3" />
                       </a>
                     </Button>

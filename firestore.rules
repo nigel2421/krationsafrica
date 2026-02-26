@@ -3,92 +3,48 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * KREATION254 SECURITY RULES PHILOSOPHY
-     * 
-     * Core Philosophy: 
-     * This ruleset implements a Hybrid Security Model combining Path-Based Ownership and Role-Based Access Control (RBAC). 
-     * User data is strictly isolated within their own document trees, while administrative access is granted 
-     * globally based on a "role" field within the user's profile and a bootstrap admin email.
-     * 
-     * Data Structure:
-     * - Public Catalog: /products and /categories are globally readable.
-     * - User Data: /userProfiles/{userId} and its subcollections (orders, orderItems) are nested under the UID.
-     * - Admin Assets: /mediaItems contains shared administrative resources.
-     * 
-     * Key Security Decisions:
-     * 1. Bootstrap Admin: nigel2421@gmail.com is hardcoded as an admin to ensure initial setup capability.
-     * 2. DBAC (Database Access Control): Subsequent admin checks query the /userProfiles collection for a 'role' of 'admin'.
-     * 3. Ownership Consistency: For subcollections under /userProfiles/{userId}, we enforce that the data matches the path.
-     * 4. Relational Integrity: On order creation, the 'userId' field must match the authenticated user's UID.
-     * 
-     * Denormalization for Authorization:
-     * - The 'role' field is denormalized on UserProfile to avoid complex lookups for every request.
-     * - The 'userId' is stored directly on Order documents to allow for direct validation against the path variable.
+     * KREATION254 SECURITY RULES
+     * Corrected to prevent "Missing Permissions" during first-time login.
      */
 
     // --- GLOBAL HELPER FUNCTIONS ---
 
-    /** @description Checks if the user is authenticated. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the user's UID matches the provided ID. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the user is the bootstrap admin or has the admin role in their profile. */
+    /** 
+     * @description Robust admin check. 
+     * Uses exists() to prevent rule evaluation errors on non-existent profiles.
+     */
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'nigel2421@gmail.com' || 
-        get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin'
+        (request.auth.token.keys().contains('email') && request.auth.token.email == 'nigel2421@gmail.com') || 
+        (exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
-    /** @description Combines ownership check with existence check for destructive/modifying operations. */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
     // --- COLLECTION RULES ---
 
-    /**
-     * @description Publicly readable shoe products; admin-only management.
-     * @path /products/{productId}
-     * @allow get, list: if true; (Public Catalog)
-     * @allow create, update, delete: if isAdmin(); (Admin Dashboard)
-     * @deny create: if !isAdmin(); (Non-admins cannot add products)
-     * @principle Public Read with Owner-Only Writes (Admin).
-     */
     match /products/{productId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description Publicly readable shoe categories; admin-only management.
-     * @path /categories/{categoryId}
-     * @allow get, list: if true; (Public Catalog)
-     * @allow create, update, delete: if isAdmin(); (Admin Dashboard)
-     * @deny update: if !isAdmin(); (Non-admins cannot modify categories)
-     * @principle Public Read with Owner-Only Writes (Admin).
-     */
     match /categories/{categoryId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description User profile management. Users create their own, admins manage all.
-     * @path /userProfiles/{userId}
-     * @allow get: if isOwner(userId) || isAdmin();
-     * @allow list: if isAdmin(); (Admins list users, users only get self)
-     * @allow create: if isOwner(userId); (Self-registration)
-     * @allow update: if isExistingOwner(userId) || isAdmin();
-     * @allow delete: if isAdmin(); (Administrative cleanup)
-     * @principle Ownership & Self-Creation.
-     */
     match /userProfiles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
@@ -97,28 +53,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    /**
-     * @description Customer orders nested under the user's profile for strict isolation.
-     * @path /userProfiles/{userId}/orders/{orderId}
-     * @allow get, list: if isOwner(userId) || isAdmin();
-     * @allow create: if isOwner(userId) && request.resource.data.userId == userId; (Relational Integrity)
-     * @allow update: if isExistingOwner(userId) || isAdmin();
-     * @allow delete: if isAdmin();
-     * @principle Nested Ownership with Path Consistency.
-     */
     match /userProfiles/{userId}/orders/{orderId} {
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow update: if isExistingOwner(userId) || isAdmin();
       allow delete: if isAdmin();
 
-      /**
-       * @description Details of items within an order. Inherits access from parent order.
-       * @path /userProfiles/{userId}/orders/{orderId}/orderItems/{orderItemId}
-       * @allow get, list, create, update: if isOwner(userId) || isAdmin();
-       * @allow delete: if isAdmin();
-       * @principle Inherited Authorization via Path Nesting.
-       */
       match /orderItems/{orderItemId} {
         allow get, list, update: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) || isAdmin();
@@ -127,13 +67,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Centralized media library accessible only to administrators.
-     * @path /mediaItems/{mediaItemId}
-     * @allow get, list, create, update, delete: if isAdmin();
-     * @deny get: if !isAdmin(); (Private admin assets)
-     * @principle Global Admin-Role Access.
+     * @description Media collection for product images.
+     * Changed path from 'mediaItems' to 'media' to match application code.
      */
-    match /mediaItems/{mediaItemId} {
+    match /media/{mediaId} {
       allow get, list, create, update, delete: if isAdmin();
     }
   }
