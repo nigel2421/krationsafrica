@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
+  signInWithEmailAndPassword
 } from "firebase/auth";
 import { useAuth, useFirestore, useUser } from "@/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -15,14 +14,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Chrome, Mail, Lock, UserPlus } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Chrome, Mail, Lock } from "lucide-react";
 
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -45,7 +42,7 @@ export default function AdminLogin() {
       await setDoc(userRef, {
         id: user.uid,
         email: user.email,
-        name: user.displayName || name || "Customer",
+        name: user.displayName || "Customer",
         role: role,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -78,21 +75,7 @@ export default function AdminLogin() {
       await syncUserProfile(result.user);
       router.push("/admin/dashboard");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      await syncUserProfile(result.user);
-      router.push("/admin/dashboard");
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: "Invalid credentials or account does not exist.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -111,76 +94,67 @@ export default function AdminLogin() {
       <Card className="w-full max-w-md shadow-2xl border-primary/10 overflow-hidden">
         <CardHeader className="space-y-1 text-center bg-primary text-white pb-8">
           <CardTitle className="text-4xl font-black tracking-tighter">KREATION 254</CardTitle>
-          <CardDescription className="text-white/70">Sign in to your account</CardDescription>
+          <CardDescription className="text-white/70">Secure Access Portal</CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="space-y-4">
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                </div>
-                <Button type="submit" className="w-full h-12 font-bold" disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
-                  Sign In with Email
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="space-y-4">
-              <form onSubmit={handleEmailSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input id="signup-name" type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input id="signup-email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                </div>
-                <Button type="submit" className="w-full h-12 font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90" disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
-                  Create Account
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+        <CardContent className="pt-8 space-y-6">
+          <Button 
+            variant="outline"
+            className="w-full h-14 font-bold flex items-center justify-center gap-3 border-2 hover:bg-muted/50 transition-all text-lg"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Chrome className="h-6 w-6" />}
+            Continue with Google
+          </Button>
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-background px-2 text-muted-foreground font-semibold">Or use email login</span>
             </div>
           </div>
 
-          <Button 
-            variant="outline"
-            className="w-full h-12 font-bold flex items-center justify-center gap-3 border-2"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Chrome className="h-5 w-5" />}
-            Google Account
-          </Button>
+          <form onSubmit={handleEmailLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="name@example.com" 
+                  className="pl-10"
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  className="pl-10"
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full h-12 font-bold" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Sign In
+            </Button>
+          </form>
         </CardContent>
-        <CardFooter className="flex flex-col text-center gap-2 pb-6">
+        <CardFooter className="flex flex-col text-center gap-2 pb-6 border-t mt-4 pt-4">
           <p className="text-xs text-muted-foreground">
-            By continuing, you agree to our Terms and Privacy Policy.
+            For existing accounts only. New users must sign in with Google.
           </p>
         </CardFooter>
       </Card>
