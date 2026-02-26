@@ -2,11 +2,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, LayoutDashboard, Package, Image as ImageIcon, LogOut, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +15,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { MediaLibrary } from "@/components/admin/media-library";
 import { generateProductDescription } from "@/ai/flows/admin-product-description-generator";
+
+const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
 
 export default function AdminDashboard() {
   const [products, setProducts] = useState<any[]>([]);
@@ -25,15 +28,20 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  
   const [form, setForm] = useState({
     name: "",
+    brand: "",
     price: "",
     category: "Sneakers",
+    gender: "Unisex",
     stockStatus: "In Stock",
     description: "",
+    materials: "",
     imageUrl: "",
+    availableSizes: [] as string[],
   });
-  const [isAiGenerating, setIsAiGenerating] = useState(false);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -64,13 +72,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleSize = (size: string) => {
+    setForm(prev => ({
+      ...prev,
+      availableSizes: prev.availableSizes.includes(size)
+        ? prev.availableSizes.filter(s => s !== size)
+        : [...prev.availableSizes, size]
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const slug = form.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const data = {
         ...form,
         price: parseFloat(form.price),
-        createdAt: editingProduct ? editingProduct.createdAt : new Date(),
+        slug,
+        updatedAt: serverTimestamp(),
+        createdAt: editingProduct ? editingProduct.createdAt : serverTimestamp(),
       };
 
       if (editingProduct) {
@@ -82,23 +102,42 @@ export default function AdminDashboard() {
       }
 
       setDialogOpen(false);
-      setEditingProduct(null);
-      setForm({ name: "", price: "", category: "Sneakers", stockStatus: "In Stock", description: "", imageUrl: "" });
+      resetForm();
       fetchProducts();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   };
 
+  const resetForm = () => {
+    setEditingProduct(null);
+    setForm({
+      name: "",
+      brand: "",
+      price: "",
+      category: "Sneakers",
+      gender: "Unisex",
+      stockStatus: "In Stock",
+      description: "",
+      materials: "",
+      imageUrl: "",
+      availableSizes: [],
+    });
+  };
+
   const handleEdit = (product: any) => {
     setEditingProduct(product);
     setForm({
       name: product.name,
+      brand: product.brand || "",
       price: product.price.toString(),
       category: product.category,
+      gender: product.gender || "Unisex",
       stockStatus: product.stockStatus,
       description: product.description || "",
+      materials: product.materials || "",
       imageUrl: product.imageUrl,
+      availableSizes: product.availableSizes || [],
     });
     setDialogOpen(true);
   };
@@ -120,6 +159,8 @@ export default function AdminDashboard() {
       const result = await generateProductDescription({
         shoeName: form.name,
         category: form.category,
+        material: form.materials,
+        occasion: form.category === 'Official' ? 'Formal' : 'Casual',
       });
       setForm({ ...form, description: result.description });
       toast({ title: "AI Generation Complete" });
@@ -147,111 +188,130 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 mt-12">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h2 className="text-3xl font-black text-primary">Inventory Management</h2>
-            <p className="text-muted-foreground">Add and manage shoes in your catalog.</p>
+            <p className="text-muted-foreground">Manage your shoe catalog with precision.</p>
           </div>
           <Button onClick={() => {
-            setEditingProduct(null);
-            setForm({ name: "", price: "", category: "Sneakers", stockStatus: "In Stock", description: "", imageUrl: "" });
+            resetForm();
             setDialogOpen(true);
-          }} className="h-12 px-6 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold">
+          }} className="h-12 px-6 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold w-full md:w-auto">
             <Plus className="mr-2 h-5 w-5" /> Add New Product
           </Button>
         </div>
 
-        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-card rounded-2xl border shadow-sm overflow-hidden">
           {loading ? (
             <div className="p-20 flex flex-col items-center justify-center gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-secondary" />
               <p className="font-bold text-muted-foreground">Loading inventory...</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead className="w-[100px]">Image</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="relative h-12 w-12 rounded-lg overflow-hidden border">
-                        <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-bold text-primary">{product.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{product.category}</Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">KES {product.price.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={product.stockStatus === "In Stock" ? "default" : product.stockStatus === "Few Left" ? "secondary" : "destructive"}
-                      >
-                        {product.stockStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(product.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="w-[80px]">Image</TableHead>
+                    <TableHead>Shoe Details</TableHead>
+                    <TableHead>Category/Gender</TableHead>
+                    <TableHead>Inventory</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="relative h-14 w-14 rounded-lg overflow-hidden border bg-muted">
+                          <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-primary">{product.name}</span>
+                          <span className="text-xs text-muted-foreground uppercase font-semibold">{product.brand || 'No Brand'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="outline" className="text-[10px]">{product.category}</Badge>
+                          <Badge variant="secondary" className="text-[10px]">{product.gender}</Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <Badge 
+                            variant={product.stockStatus === "In Stock" ? "default" : product.stockStatus === "Few Left" ? "secondary" : "destructive"}
+                            className="w-fit text-[10px]"
+                          >
+                            {product.stockStatus}
+                          </Badge>
+                          <span className="text-[10px] font-medium text-muted-foreground">
+                            Sizes: {product.availableSizes?.join(", ") || "None"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-black text-secondary">KES {product.price.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(product.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </div>
       </main>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">{editingProduct ? "Edit Shoe" : "Add New Shoe"}</DialogTitle>
-            <DialogDescription>Fill in the details for your product listing.</DialogDescription>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tight">
+              {editingProduct ? "Edit Product Listing" : "Create New Product Listing"}
+            </DialogTitle>
+            <DialogDescription>Provide comprehensive details to attract more customers.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Shoe Name</Label>
-                  <Input 
-                    required 
-                    value={form.name} 
-                    onChange={e => setForm({...form, name: e.target.value})} 
-                    placeholder="e.g. Nike Air Max Plus"
-                  />
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column: Core Info */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Shoe Name</Label>
+                    <Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Air Jordan 1 Retro" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Check className="h-4 w-4" /> Brand</Label>
+                    <Input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} placeholder="e.g. Nike" />
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Price (KES)</Label>
-                    <Input 
-                      type="number" 
-                      required 
-                      value={form.price} 
-                      onChange={e => setForm({...form, price: e.target.value})} 
-                      placeholder="12500"
-                    />
+                    <Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} placeholder="15000" />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Materials</Label>
+                    <Input value={form.materials} onChange={e => setForm({...form, materials: e.target.value})} placeholder="e.g. Leather, Suede" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Category</Label>
                     <Select value={form.category} onValueChange={v => setForm({...form, category: v})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Sneakers">Sneakers</SelectItem>
                         <SelectItem value="Boots">Boots</SelectItem>
@@ -260,13 +320,54 @@ export default function AdminDashboard() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <Select value={form.gender} onValueChange={v => setForm({...form, gender: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Men">Men</SelectItem>
+                        <SelectItem value="Women">Women</SelectItem>
+                        <SelectItem value="Unisex">Unisex</SelectItem>
+                        <SelectItem value="Kids">Kids</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+
+                <div className="space-y-4">
+                  <Label className="flex items-center gap-2"><Layers className="h-4 w-4" /> Available Sizes (EU)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {SHOE_SIZES.map(size => (
+                      <div key={size} className="flex items-center space-x-2 bg-muted p-2 rounded-md hover:bg-muted/80 cursor-pointer">
+                        <Checkbox 
+                          id={`size-${size}`} 
+                          checked={form.availableSizes.includes(size)} 
+                          onCheckedChange={() => toggleSize(size)}
+                        />
+                        <Label htmlFor={`size-${size}`} className="text-xs font-bold">{size}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label>Stock Status</Label>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label>Description</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={handleAiGenerate} disabled={isAiGenerating} className="h-7 text-[10px] font-bold uppercase text-secondary">
+                      {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                      Generate AI Copy
+                    </Button>
+                  </div>
+                  <Textarea rows={4} value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Detailed product features..." />
+                </div>
+              </div>
+
+              {/* Right Column: Visuals & Stock */}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Stock Availability</Label>
                   <Select value={form.stockStatus} onValueChange={v => setForm({...form, stockStatus: v})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="In Stock">In Stock</SelectItem>
                       <SelectItem value="Few Left">Few Left</SelectItem>
@@ -274,49 +375,26 @@ export default function AdminDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <Label>Product Description</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleAiGenerate}
-                      disabled={isAiGenerating}
-                      className="h-7 text-[10px] font-bold uppercase tracking-wider text-secondary border-secondary/50 hover:bg-secondary/10"
-                    >
-                      {isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                      Generate with AI
-                    </Button>
-                  </div>
-                  <Textarea 
-                    rows={4} 
-                    value={form.description} 
-                    onChange={e => setForm({...form, description: e.target.value})} 
-                    placeholder="Enter features, materials..."
+
+                <div className="space-y-4">
+                  <Label>Product Visual Selection</Label>
+                  <MediaLibrary 
+                    selectedUrl={form.imageUrl} 
+                    onSelect={(url) => setForm({...form, imageUrl: url})} 
                   />
+                  {form.imageUrl && (
+                    <div className="relative aspect-square max-w-[200px] rounded-xl overflow-hidden border-4 border-secondary/20 mx-auto">
+                      <img src={form.imageUrl} alt="Preview" className="object-cover h-full w-full" />
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="space-y-4">
-                <Label>Product Image Selection</Label>
-                <MediaLibrary 
-                  selectedUrl={form.imageUrl} 
-                  onSelect={(url) => setForm({...form, imageUrl: url})} 
-                />
-                {form.imageUrl && (
-                  <div className="mt-4 p-2 border rounded-xl bg-muted/30">
-                    <p className="text-xs font-bold mb-2 uppercase text-muted-foreground">Preview:</p>
-                    <div className="relative aspect-video rounded-lg overflow-hidden border">
-                      <img src={form.imageUrl} alt="preview" className="object-cover h-full w-full" />
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
-            <DialogFooter className="gap-2">
-              <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={!form.imageUrl} className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-bold px-8">
-                {editingProduct ? "Update Product" : "Save Product"}
+
+            <DialogFooter className="gap-2 border-t pt-6">
+              <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Discard Changes</Button>
+              <Button type="submit" disabled={!form.imageUrl} className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-black px-12 uppercase">
+                {editingProduct ? "Update Listing" : "Publish Product"}
               </Button>
             </DialogFooter>
           </form>
