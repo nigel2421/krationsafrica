@@ -310,6 +310,13 @@ export default function AdminDashboard() {
                 <AlertTitle>AI Action Required</AlertTitle>
                 <AlertDescription className="text-xs">
                   {aiError}
+                  <div className="mt-2">
+                    <Button variant="link" className="p-0 h-auto text-xs text-destructive underline font-bold" asChild>
+                      <a href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=782503041956" target="_blank">
+                        Enable Generative Language API
+                      </a>
+                    </Button>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}

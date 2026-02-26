@@ -31,8 +31,8 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      console.log("User detected, redirecting to dashboard...");
-      syncUserProfile(user).finally(() => {
+      console.log("User detected, syncing profile...");
+      syncUserProfile(user).then(() => {
         router.push("/admin/dashboard");
       });
     }
@@ -56,8 +56,12 @@ export default function AdminLogin() {
         });
         console.log("Profile created with role:", role);
       }
-    } catch (e) {
-      console.error("Profile sync error:", e);
+    } catch (e: any) {
+      console.error("Profile sync failed:", e);
+      // We don't block the redirect for nigel as rules have email fallback
+      if (currentUser.email !== "nigel2421@gmail.com") {
+        setAuthError({ message: "Failed to initialize profile. Check your connection.", code: e.code });
+      }
     }
   };
 
@@ -67,7 +71,6 @@ export default function AdminLogin() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      toast({ title: "Authenticating...", description: "Preparing your profile." });
     } catch (error: any) {
       if (error.code === 'auth/popup-closed-by-user') {
         setLoading(false);
