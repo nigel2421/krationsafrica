@@ -14,33 +14,37 @@ service cloud.firestore {
 
     /** 
      * @description Robust admin check. 
-     * Prioritizes email whitelist for immediate access during setup.
+     * Whitelists specific emails and UIDs for administrative access.
      */
     function isAdmin() {
       let adminEmails = ['nigel2421@gmail.com', 'nigelandahua@outlook.com'];
+      let adminUids = ['TMsYLdQiIENfcUnviF8Jpe0WUS93']; // Your current UID from logs
+      
       return isSignedIn() && (
         (request.auth.token.email in adminEmails) || 
+        (request.auth.uid in adminUids) ||
         (exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
     // --- COLLECTION RULES ---
 
-    // Products must be publicly readable for any user to browse the shop
+    // Products & Categories: Publicly readable for everyone (Guest or Logged In)
     match /products/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // Categories must be publicly readable
     match /categories/{categoryId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Media library: Publicly readable for product images
+    match /media/{mediaId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // User Profiles
@@ -48,22 +52,16 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId);
-      allow update: if (isExistingOwner(userId) || isAdmin()) && (isAdmin() || request.resource.data.role == resource.data.role);
+      allow update: if (isOwner(userId) || isAdmin());
       allow delete: if isAdmin();
     }
 
     // Orders
     match /userProfiles/{userId}/orders/{orderId} {
       allow get, list: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
-    }
-
-    // Media library must be publicly readable for product images to load
-    match /media/{mediaId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
     }
   }
 }

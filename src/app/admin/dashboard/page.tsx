@@ -5,7 +5,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTi
 import { useAuth, useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle, Info, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, LayoutDashboard, LogOut, Sparkles, Loader2, Check, Tag, Layers, AlertCircle, Info, ExternalLink, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -202,14 +202,24 @@ export default function AdminDashboard() {
 
       <main className="container mx-auto px-4 mt-12">
         {productsError && (
-          <Alert variant="destructive" className="mb-8">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Database Sync Error</AlertTitle>
-            <AlertDescription className="text-xs">
-              {productsError.message}
-              <div className="mt-2">
-                <p className="font-bold">Recommendation: Disable any Ad-Blockers for this domain and refresh.</p>
+          <Alert variant="destructive" className="mb-8 border-2 animate-pulse">
+            <ShieldAlert className="h-5 w-5" />
+            <AlertTitle className="font-black uppercase tracking-tight">Database Connection Blocked</AlertTitle>
+            <AlertDescription className="space-y-4">
+              <p className="font-bold text-sm">
+                Your browser or network is blocking the connection to the database.
+              </p>
+              <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
+                <h4 className="font-black text-xs uppercase mb-2">Required Action:</h4>
+                <ol className="list-decimal list-inside text-xs space-y-1 font-medium">
+                  <li>Disable your Ad-Blocker (uBlock Origin, AdBlock, etc.)</li>
+                  <li>If using Brave, turn off "Shields" for this site.</li>
+                  <li>Refresh this page.</li>
+                </ol>
               </div>
+              <p className="text-[10px] opacity-70 italic font-mono">
+                Error Detail: {productsError.message}
+              </p>
             </AlertDescription>
           </Alert>
         )}
@@ -329,22 +339,22 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Tag className="h-4 w-4" /> Shoe Name</Label>
-                    <Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Air Jordan 1 Retro" />
+                    <input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Air Jordan 1 Retro" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Check className="h-4 w-4" /> Brand</Label>
-                    <Input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} placeholder="e.g. Nike" />
+                    <input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} placeholder="e.g. Nike" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Price (KES)</Label>
-                    <Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} placeholder="15000" />
+                    <input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} placeholder="15000" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
                   </div>
                   <div className="space-y-2">
                     <Label>Materials</Label>
-                    <Input value={form.materials} onChange={e => setForm({...form, materials: e.target.value})} placeholder="e.g. Leather, Suede" />
+                    <input value={form.materials} onChange={e => setForm({...form, materials: e.target.value})} placeholder="e.g. Leather, Suede" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" />
                   </div>
                 </div>
 
