@@ -18,7 +18,7 @@ service cloud.firestore {
      */
     function isAdmin() {
       let adminEmails = ['nigel2421@gmail.com', 'nigelandahua@outlook.com'];
-      let adminUids = ['TMsYLdQiIENfcUnviF8Jpe0WUS93']; // Your current UID from logs
+      let adminUids = ['TMsYLdQiIENfcUnviF8Jpe0WUS93']; // User's specific UID
       
       return isSignedIn() && (
         (request.auth.token.email in adminEmails) || 
@@ -30,7 +30,7 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // Products & Categories: Publicly readable for everyone (Guest or Logged In)
+    // Products & Categories: Explicitly public for browsing (Guest or Logged In)
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
