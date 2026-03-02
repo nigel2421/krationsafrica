@@ -61,7 +61,6 @@ export default function AdminDashboardOverview() {
   // Derived Stats
   const totalRevenue = allOrders?.reduce((acc, order) => acc + (order.totalAmount || 0), 0) || 0;
   const pendingOrders = allOrders?.filter(o => o.orderStatus === "Pending").length || 0;
-  const stockAlerts = products?.filter(p => p.stockStatus === "Few Left" || p.stockStatus === "Out of Stock").length || 0;
 
   // Chart Data
   const chartData = [
@@ -104,7 +103,7 @@ export default function AdminDashboardOverview() {
           <AlertCircle className="h-5 w-5" />
           <AlertTitle className="font-black uppercase text-xs">Connectivity Warning</AlertTitle>
           <AlertDescription className="text-sm">
-            Database access is being restricted. If you are using an **Ad-Blocker** (like uBlock or AdBlock Plus), please **disable it** for this site to see your inventory and orders.
+            Database access is being restricted. If you are using an **Ad-Blocker** (like uBlock or AdBlock Plus), please **disable it** for this site to see your inventory and orders. Firebase uses WebSocket connections which these tools often block.
           </AlertDescription>
         </Alert>
       )}
