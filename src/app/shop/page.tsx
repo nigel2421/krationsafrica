@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, where } from "firebase/firestore";
@@ -14,7 +14,7 @@ import Link from "next/link";
 
 const CATEGORIES = ["Sneakers", "Boots", "Casual", "Official"];
 
-export default function ShopPage() {
+function ShopContent() {
   const searchParams = useSearchParams();
   const db = useFirestore();
   
@@ -140,5 +140,17 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-secondary" />
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
   );
 }
