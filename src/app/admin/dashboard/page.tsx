@@ -1,24 +1,17 @@
-
 "use client";
 
 import React from "react";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 import { 
-  TrendingUp, 
   ShoppingBag, 
   Package, 
-  Users, 
-  ArrowUpRight, 
-  ArrowDownRight,
   Clock,
   Loader2,
   DollarSign
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -28,17 +21,28 @@ import {
   Area
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function AdminDashboardOverview() {
   const db = useFirestore();
 
   // Queries
-  const productsQuery = useMemoFirebase(() => query(collection(db, "products")), [db]);
-  const ordersQuery = useMemoFirebase(() => query(collection(db, "orders"), orderBy("orderedAt", "desc"), limit(5)), [db]);
-  const allOrdersQuery = useMemoFirebase(() => query(collection(db, "orders")), [db]);
+  const productsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, "products"));
+  }, [db]);
+
+  const ordersQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, "orders"), orderBy("orderedAt", "desc"), limit(5));
+  }, [db]);
+
+  const allOrdersQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, "orders"));
+  }, [db]);
 
   const { data: products, isLoading: productsLoading } = useCollection(productsQuery);
   const { data: recentOrders, isLoading: ordersLoading } = useCollection(ordersQuery);
