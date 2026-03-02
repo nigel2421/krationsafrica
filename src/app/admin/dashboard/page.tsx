@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -8,7 +9,9 @@ import {
   Package, 
   Clock,
   Loader2,
-  DollarSign
+  DollarSign,
+  Users,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -24,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function AdminDashboardOverview() {
   const db = useFirestore();
@@ -44,16 +48,22 @@ export default function AdminDashboardOverview() {
     return query(collection(db, "orders"));
   }, [db]);
 
-  const { data: products, isLoading: productsLoading } = useCollection(productsQuery);
+  const customersQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, "userProfiles"));
+  }, [db]);
+
+  const { data: products, isLoading: productsLoading, error: productsError } = useCollection(productsQuery);
   const { data: recentOrders, isLoading: ordersLoading } = useCollection(ordersQuery);
   const { data: allOrders } = useCollection(allOrdersQuery);
+  const { data: customers } = useCollection(customersQuery);
 
   // Derived Stats
   const totalRevenue = allOrders?.reduce((acc, order) => acc + (order.totalAmount || 0), 0) || 0;
   const pendingOrders = allOrders?.filter(o => o.orderStatus === "Pending").length || 0;
   const stockAlerts = products?.filter(p => p.stockStatus === "Few Left" || p.stockStatus === "Out of Stock").length || 0;
 
-  // Dummy Chart Data (Would be real in a more complex setup)
+  // Chart Data
   const chartData = [
     { name: "Mon", revenue: 45000 },
     { name: "Tue", revenue: 52000 },
@@ -68,7 +78,7 @@ export default function AdminDashboardOverview() {
     { label: "Total Revenue", value: `KES ${totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "+12.5%", trendUp: true, color: "text-green-500" },
     { label: "Orders to Fulfill", value: pendingOrders.toString(), icon: ShoppingBag, trend: "Pending", trendUp: false, color: "text-secondary" },
     { label: "Total Inventory", value: products?.length.toString() || "0", icon: Package, trend: "Products", trendUp: true, color: "text-primary" },
-    { label: "Low Stock Alert", value: stockAlerts.toString(), icon: Clock, trend: "Restock needed", trendUp: false, color: "text-destructive" },
+    { label: "Active Customers", value: customers?.length.toString() || "0", icon: Users, trend: "Users", trendUp: true, color: "text-purple-500" },
   ];
 
   if (productsLoading || ordersLoading) {
@@ -81,10 +91,23 @@ export default function AdminDashboardOverview() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">Business Overview</h1>
-        <p className="text-muted-foreground font-medium">Real-time performance metrics for Kreation 254.</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">Business Overview</h1>
+          <p className="text-muted-foreground font-medium">Real-time performance metrics for Kreation 254.</p>
+        </div>
+        <Badge variant="outline" className="h-8 border-2 font-bold px-4">Live Sync Active</Badge>
       </div>
+
+      {productsError && (
+        <Alert variant="destructive" className="border-2 shadow-lg">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="font-black uppercase text-xs">Connectivity Warning</AlertTitle>
+          <AlertDescription className="text-sm">
+            Database access is being restricted. If you are using an **Ad-Blocker** (like uBlock or AdBlock Plus), please **disable it** for this site to see your inventory and orders.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

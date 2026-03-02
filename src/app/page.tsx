@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Zap, ShieldCheck, Truck, ShoppingBag, Star, Mail, Instagram, ChevronDown } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, Truck, ShoppingBag, Star, Mail, Instagram, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -12,25 +12,26 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 
-const CATEGORIES = [
-  { name: "Sneakers", slug: "sneakers", image: PlaceHolderImages.find(i => i.id === 'sneakers-cat')?.imageUrl },
-  { name: "Boots", slug: "boots", image: PlaceHolderImages.find(i => i.id === 'boots-cat')?.imageUrl },
-  { name: "Casual", slug: "casual", image: PlaceHolderImages.find(i => i.id === 'casual-cat')?.imageUrl },
-  { name: "Official", slug: "official", image: PlaceHolderImages.find(i => i.id === 'official-cat')?.imageUrl },
-];
-
 const BRANDS = ["Nike", "Adidas", "Puma", "Reebok", "Timberland", "Vans", "Converse", "Jordan"];
 
 export default function Home() {
   const db = useFirestore();
   const heroImage = PlaceHolderImages.find(i => i.id === 'hero-shoe')?.imageUrl || "";
 
+  // Dynamic Categories from Firestore
+  const categoriesQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, "categories"), orderBy("name", "asc"));
+  }, [db]);
+
+  // Featured Products
   const productsQuery = useMemoFirebase(() => {
     if (!db) return null;
     return query(collection(db, "products"), orderBy("createdAt", "desc"), limit(8));
   }, [db]);
 
-  const { data: featuredProducts, isLoading } = useCollection(productsQuery);
+  const { data: categories, isLoading: categoriesLoading } = useCollection(categoriesQuery);
+  const { data: featuredProducts, isLoading: productsLoading } = useCollection(productsQuery);
 
   return (
     <main className="min-h-screen">
@@ -101,26 +102,35 @@ export default function Home() {
             <h2 className="text-5xl font-black text-primary tracking-tighter uppercase mb-4">Shop Categories</h2>
             <div className="h-2 w-32 bg-secondary rounded-full" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {CATEGORIES.map((cat) => (
-              <Link key={cat.slug} href={`/shop?category=${cat.slug}`} className="group relative h-[500px] overflow-hidden">
-                <Image
-                  src={cat.image || ""}
-                  alt={cat.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-8 w-full">
-                  <h3 className="text-4xl font-black text-white mb-2 uppercase">{cat.name}</h3>
-                  <p className="text-secondary font-black flex items-center gap-2 group-hover:translate-x-2 transition-transform">
-                    DISCOVER NOW <ArrowRight className="h-5 w-5" />
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          
+          {categoriesLoading ? (
+            <div className="flex justify-center py-20"><Loader2 className="h-12 w-12 animate-spin text-secondary" /></div>
+          ) : categories && categories.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {categories.map((cat) => (
+                <Link key={cat.slug} href={`/shop?category=${cat.slug}`} className="group relative h-[500px] overflow-hidden rounded-xl border-4 border-transparent hover:border-secondary transition-all">
+                  <Image
+                    src={cat.imageUrl || ""}
+                    alt={cat.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-8 w-full">
+                    <h3 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">{cat.name}</h3>
+                    <p className="text-secondary font-black flex items-center gap-2 group-hover:translate-x-2 transition-transform uppercase text-xs tracking-widest">
+                      DISCOVER NOW <ArrowRight className="h-4 w-4" />
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-muted/10 rounded-3xl border-2 border-dashed">
+              <p className="text-muted-foreground font-bold">Categories are being prepared. Check back soon!</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -139,7 +149,7 @@ export default function Home() {
             </Button>
           </div>
           
-          {isLoading ? (
+          {productsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[1, 2, 3, 4].map(i => <div key={i} className="aspect-[3/4] bg-muted animate-pulse rounded-xl" />)}
             </div>

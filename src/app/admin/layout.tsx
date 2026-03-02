@@ -13,7 +13,8 @@ import {
   Loader2, 
   ShieldCheck,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: "Inventory", href: "/admin/products", icon: Package },
     { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
     { label: "Categories", href: "/admin/categories", icon: Layers },
+    { label: "Customers", href: "/admin/customers", icon: Users },
   ];
 
   if (isUserLoading) {
@@ -97,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Mobile Nav Toggle */}
       <div className="md:hidden fixed top-4 right-4 z-50">
-        <Button size="icon" className="rounded-full shadow-xl" onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}>
+        <Button size="icon" className="rounded-full shadow-xl bg-primary text-white" onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}>
           {isMobileNavOpen ? <X /> : <Menu />}
         </Button>
       </div>
