@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,13 +13,9 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** 
-     * @description Robust admin check. 
-     * Whitelists specific emails and UIDs for administrative access.
-     */
     function isAdmin() {
       let adminEmails = ['nigel2421@gmail.com', 'nigelandahua@outlook.com'];
-      let adminUids = ['TMsYLdQiIENfcUnviF8Jpe0WUS93']; // User's specific UID
+      let adminUids = ['TMsYLdQiIENfcUnviF8Jpe0WUS93'];
       
       return isSignedIn() && (
         (request.auth.token.email in adminEmails) || 
@@ -30,7 +27,6 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // Products & Categories: Explicitly public for browsing (Guest or Logged In)
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -41,13 +37,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Media library: Publicly readable for product images
+    match /orders/{orderId} {
+      allow read, write: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
     match /media/{mediaId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // User Profiles
     match /userProfiles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
@@ -56,11 +55,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Orders
     match /userProfiles/{userId}/orders/{orderId} {
-      allow get, list: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
   }

@@ -2,86 +2,26 @@
 {
   "entities": {
     "Product": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Product",
       "type": "object",
       "description": "Represents a single shoe product available for sale in the store.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Product entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the shoe product."
-        },
-        "brand": {
-          "type": "string",
-          "description": "The brand of the shoe (e.g., Nike, Adidas)."
-        },
-        "price": {
-          "type": "number",
-          "description": "The price of the shoe product."
-        },
-        "categoryId": {
-          "type": "string",
-          "description": "Reference to the Category this product belongs to."
-        },
-        "gender": {
-          "type": "string",
-          "description": "Target gender for the product (Men, Women, Unisex, Kids).",
-          "enum": ["Men", "Women", "Unisex", "Kids"]
-        },
-        "availableSizes": {
-          "type": "array",
-          "description": "List of available sizes for this product.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "The URL of the primary image for the product.",
-          "format": "uri"
-        },
-        "stockStatus": {
-          "type": "string",
-          "description": "The current stock status: 'In Stock', 'Out of Stock', 'Few Left'."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the product."
-        },
-        "materials": {
-          "type": "string",
-          "description": "Materials used in the shoe (e.g., Leather, Mesh)."
-        },
-        "slug": {
-          "type": "string",
-          "description": "URL-friendly unique identifier."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "brand": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Men", "Women", "Unisex", "Kids"] },
+        "availableSizes": { "type": "array", "items": { "type": "string" } },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "stockStatus": { "type": "string", "enum": ["In Stock", "Few Left", "Out of Stock"] },
+        "description": { "type": "string" },
+        "materials": { "type": "string" },
+        "slug": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": [
-        "id",
-        "name",
-        "brand",
-        "price",
-        "categoryId",
-        "gender",
-        "imageUrl",
-        "stockStatus",
-        "description",
-        "slug",
-        "createdAt"
-      ]
+      "required": ["id", "name", "brand", "price", "category", "gender", "imageUrl", "stockStatus", "description", "slug", "createdAt"]
     },
     "Category": {
       "title": "Category",
@@ -90,7 +30,7 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "slug": { "type": "string" },
-        "coverImageUrl": { "type": "string", "format": "uri" }
+        "imageUrl": { "type": "string", "format": "uri" }
       },
       "required": ["id", "name", "slug"]
     },
@@ -105,7 +45,7 @@
         "deliveryLocation": { "type": "string" },
         "items": { "type": "array", "items": { "type": "string" } },
         "totalAmount": { "type": "number" },
-        "orderStatus": { "type": "string" },
+        "orderStatus": { "type": "string", "enum": ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"] },
         "orderedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "customerName", "customerPhoneNumber", "deliveryLocation", "items", "totalAmount", "orderStatus", "orderedAt"]
@@ -117,7 +57,7 @@
         "id": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "name": { "type": "string" },
-        "role": { "type": "string" }
+        "role": { "type": "string", "enum": ["admin", "customer"] }
       },
       "required": ["id", "email", "role"]
     }
@@ -129,6 +69,7 @@
     "structure": [
       { "path": "/products/{productId}", "definition": { "entityName": "Product" } },
       { "path": "/categories/{categoryId}", "definition": { "entityName": "Category" } },
+      { "path": "/orders/{orderId}", "definition": { "entityName": "Order" } },
       { "path": "/userProfiles/{userId}", "definition": { "entityName": "UserProfile" } },
       { "path": "/userProfiles/{userId}/orders/{orderId}", "definition": { "entityName": "Order" } }
     ]
