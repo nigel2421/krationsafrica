@@ -72,7 +72,7 @@ export function CartSidebar() {
       const orderId = generateOrderId();
       const zoneLabel = deliveryMethod === "delivery" 
         ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.label || "Delivery") 
-        : "Store Pick-up (Nairobi CBD)";
+        : "Store Pick-up (Royal Palms Mall)";
       
       const itemsList = cart
         .map((item) => `• ${item.name} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
@@ -82,7 +82,7 @@ export function CartSidebar() {
         id: orderId,
         customerName: details.name,
         customerPhoneNumber: details.phone,
-        deliveryLocation: deliveryMethod === "delivery" ? details.location : "Store Pick-up",
+        deliveryLocation: deliveryMethod === "delivery" ? details.location : "Royal Palms Mall, Shop BF01",
         deliveryRegion: zoneLabel,
         deliveryFee: deliveryFee,
         specialNotes: details.notes,
@@ -110,7 +110,7 @@ export function CartSidebar() {
         `Name: ${details.name}\n` +
         `Phone: ${details.phone}\n` +
         `Method: ${deliveryMethod === "delivery" ? "Delivery" : "Pick-up"}\n` +
-        `${deliveryMethod === "delivery" ? `Location: ${details.location}\nRegion: ${zoneLabel}\n` : "Location: Nairobi CBD Shop\n"}` +
+        `${deliveryMethod === "delivery" ? `Location: ${details.location}\nRegion: ${zoneLabel}\n` : "Location: Royal Palms Mall, Shop BF01, Ronald Ngala St\n"}` +
         `${details.notes ? `Notes: ${details.notes}\n` : ""}\n` +
         `*Order Summary:*\n` +
         `${itemsList}\n\n` +
@@ -219,12 +219,12 @@ export function CartSidebar() {
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-secondary shrink-0" />
                   <div>
-                    <p className="font-black text-xs uppercase text-foreground">Nairobi CBD Branch</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">Available for pick up from Monday to Saturday, 9 AM - 7 PM.</p>
+                    <p className="font-black text-xs uppercase text-foreground">Royal Palms Mall, Shop BF01</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Ronald Ngala Street, Nairobi CBD. Open Mon-Sat, 9 AM - 7 PM.</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" className="w-full font-bold text-[10px] uppercase border-secondary text-secondary" asChild>
-                  <a href="https://maps.app.goo.gl/example" target="_blank"><MapPinned className="mr-2 h-3 w-3" /> Get Google Maps Pin</a>
+                  <a href="https://www.google.com/maps/search/?api=1&query=Royal+Palms+Mall+Ronald+Ngala+Street+Nairobi+Shop+BF01" target="_blank"><MapPinned className="mr-2 h-3 w-3" /> View on Google Maps</a>
                 </Button>
               </div>
             )}

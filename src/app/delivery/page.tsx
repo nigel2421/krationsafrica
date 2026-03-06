@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -54,9 +53,12 @@ export default function DeliveryInfo() {
                 <ShieldCheck className="h-6 w-6 text-secondary shrink-0" />
                 <p className="text-sm font-bold">All packages are sanitized and handled with care.</p>
               </div>
-              <div className="flex gap-4">
-                <MapPin className="h-6 w-6 text-secondary shrink-0" />
-                <p className="text-sm font-bold">Pick-up points available in Nairobi CBD.</p>
+              <div className="flex items-start gap-4">
+                <MapPin className="h-6 w-6 text-secondary shrink-0 mt-1" />
+                <div>
+                   <p className="text-sm font-bold">Physical Store Pick-up:</p>
+                   <p className="text-[10px] font-medium text-white/70">Royal Palms Mall, Shop BF01, Ronald Ngala Street, Nairobi CBD.</p>
+                </div>
               </div>
             </div>
           </aside>
