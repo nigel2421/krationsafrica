@@ -1,13 +1,15 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/hooks/use-cart";
+import { WishlistProvider } from "@/hooks/use-wishlist";
 import { Navbar } from "@/components/navbar";
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 export const metadata: Metadata = {
   title: "Kreations Kicks - Ultra Modern Shoe Store",
-  description: "Experience the future of footwear shopping. Sleek, stylish, and direct to your door via WhatsApp.",
+  description: "Experience the future of footwear shopping. IT WILL ALWAYS LOOK GOOD ON YOU.",
 };
 
 export default function RootLayout({
@@ -37,11 +39,13 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground">
         <FirebaseClientProvider>
-          <CartProvider>
-            <Navbar />
-            {children}
-            <Toaster />
-          </CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <Navbar />
+              {children}
+              <Toaster />
+            </CartProvider>
+          </WishlistProvider>
         </FirebaseClientProvider>
       </body>
     </html>

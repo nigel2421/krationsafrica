@@ -2,8 +2,9 @@
 "use client";
 
 import Image from "next/image";
-import { ShoppingCart, Check, Star } from "lucide-react";
+import { ShoppingCart, Check, Star, Heart } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -24,9 +25,11 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [added, setAdded] = useState(false);
   const isOutOfStock = product.stockStatus === "Out of Stock";
   const isFewLeft = product.stockStatus === "Few Left";
+  const inWishlist = isInWishlist(product.id);
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -34,8 +37,16 @@ export function ProductCard({ product }: ProductCardProps) {
     setTimeout(() => setAdded(false), 2000);
   };
 
+  const toggleWishlist = () => {
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
+
   return (
-    <div className="group relative flex flex-col overflow-hidden bg-card transition-all hover:shadow-2xl">
+    <div className="group relative flex flex-col overflow-hidden bg-card transition-all hover:shadow-2xl border-2 hover:border-secondary">
       <div className="aspect-[3/4] relative overflow-hidden bg-muted">
         <Image
           src={product.imageUrl}
@@ -43,7 +54,6 @@ export function ProductCard({ product }: ProductCardProps) {
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           className="object-cover transition-transform duration-700 group-hover:scale-110"
-          data-ai-hint="product shoe"
         />
         
         {/* Badges */}
@@ -58,6 +68,19 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.category}
           </Badge>
         </div>
+
+        {/* Wishlist Button */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className={cn(
+            "absolute top-4 right-4 rounded-full bg-white/50 backdrop-blur-md shadow-md hover:bg-white transition-all",
+            inWishlist && "text-destructive"
+          )}
+          onClick={toggleWishlist}
+        >
+          <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
+        </Button>
 
         {/* Rating Overlay */}
         <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-[10px] font-black">
@@ -85,8 +108,8 @@ export function ProductCard({ product }: ProductCardProps) {
             onClick={handleAddToCart}
             disabled={isOutOfStock}
             className={cn(
-              "h-12 w-12 rounded-full transition-all shrink-0",
-              added ? "bg-green-500 hover:bg-green-600" : "bg-primary hover:bg-primary/90"
+              "h-12 w-12 rounded-full transition-all shrink-0 border-2",
+              added ? "bg-green-500 border-green-500 hover:bg-green-600" : "bg-primary border-primary hover:bg-primary/90"
             )}
           >
             {added ? (
