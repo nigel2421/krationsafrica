@@ -65,7 +65,7 @@ export function CartSidebar() {
     notes: "",
   });
 
-  // Load saved details on mount
+  // Load saved details on mount (Memory feature)
   useEffect(() => {
     const saved = localStorage.getItem("kicks_customer_details");
     if (saved) {
@@ -87,8 +87,10 @@ export function CartSidebar() {
   const grandTotal = totalPrice + deliveryFee;
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copied!", description: `${label} copied to clipboard.` });
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(text);
+      toast({ title: "Copied!", description: `${label} copied to clipboard.` });
+    }
   };
 
   const normalizePhone = (phone: string) => {
@@ -116,7 +118,7 @@ export function CartSidebar() {
 
     setIsSubmitting(true);
     try {
-      // Save details for next time
+      // Save details for future convenience (Memory feature)
       localStorage.setItem("kicks_customer_details", JSON.stringify({
         name: details.name,
         phone: details.phone,
@@ -368,7 +370,6 @@ export function CartSidebar() {
                 <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Complete payment to finalize your order.</p>
               </div>
 
-              {/* Professional Payment Card */}
               <div className="bg-[#1E40AF] text-white p-1 rounded-3xl overflow-hidden shadow-2xl">
                 <div className="bg-[#2563EB] p-8 space-y-8">
                   <div className="flex items-center justify-between">
@@ -448,7 +449,6 @@ export function CartSidebar() {
         </div>
       </ScrollArea>
 
-      {/* Navigation Buttons */}
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-20 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)]">
         <div className="flex gap-2">
           {checkoutStep > 1 && !isSubmitting && (
