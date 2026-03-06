@@ -9,13 +9,14 @@ export interface CartItem {
   price: number;
   imageUrl: string;
   quantity: number;
+  size?: string;
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: any) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: any, size?: string) => void;
+  removeFromCart: (productId: string, size?: string) => void;
+  updateQuantity: (productId: string, quantity: number, size?: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -41,15 +42,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("kicks_cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: any, size?: string) => {
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      // Ensure we use the price passed (which accounts for offers)
+      const existing = prev.find((item) => item.id === product.id && item.size === size);
       const cartPrice = product.price;
 
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id 
+          item.id === product.id && item.size === size
             ? { ...item, quantity: item.quantity + 1, price: cartPrice } 
             : item
         );
@@ -59,19 +59,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         name: product.name, 
         price: cartPrice, 
         imageUrl: product.imageUrl, 
-        quantity: 1 
+        quantity: 1,
+        size: size
       }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
+  const removeFromCart = (productId: string, size?: string) => {
+    setCart((prev) => prev.filter((item) => !(item.id === productId && item.size === size)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number, size?: string) => {
     if (quantity < 1) return;
     setCart((prev) =>
-      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+      prev.map((item) => (item.id === productId && item.size === size ? { ...item, quantity } : item))
     );
   };
 

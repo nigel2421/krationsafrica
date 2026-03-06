@@ -131,7 +131,7 @@ export function CartSidebar() {
       const normalizedCustomerPhone = normalizePhone(details.phone);
       
       const itemsList = cart
-        .map((item) => `• ${item.name} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
+        .map((item) => `• ${item.name} ${item.size ? `(Size: ${item.size})` : ''} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
         .join("\n");
       
       const orderData = {
@@ -142,7 +142,7 @@ export function CartSidebar() {
         deliveryRegion: zoneLabel,
         deliveryFee: deliveryFee,
         specialNotes: details.notes,
-        items: cart.map(i => `${i.name} (x${i.quantity})`),
+        items: cart.map(i => `${i.name} ${i.size ? `(EU ${i.size})` : ''} (x${i.quantity})`),
         subtotal: totalPrice,
         totalAmount: grandTotal,
         orderStatus: "Pending",
@@ -277,22 +277,25 @@ export function CartSidebar() {
                 <>
                   <div className="space-y-4">
                     {cart.map((item) => (
-                      <div key={item.id} className="flex gap-4 group">
+                      <div key={`${item.id}-${item.size}`} className="flex gap-4 group">
                         <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors shrink-0">
                           <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
                         </div>
                         <div className="flex flex-1 flex-col justify-between py-1">
                           <div>
-                            <h3 className="font-black text-[11px] uppercase tracking-tight leading-none mb-1">{item.name}</h3>
+                            <div className="flex justify-between items-start">
+                              <h3 className="font-black text-[11px] uppercase tracking-tight leading-none mb-1">{item.name}</h3>
+                              {item.size && <Badge variant="secondary" className="text-[8px] font-black uppercase px-1.5 h-4">EU {item.size}</Badge>}
+                            </div>
                             <p className="text-sm font-black text-secondary">KES {item.price.toLocaleString()}</p>
                           </div>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 border-2 rounded-md p-1 border-muted">
-                              <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 hover:text-secondary"><Minus className="h-3 w-3" /></button>
+                              <button onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)} className="p-1 hover:text-secondary"><Minus className="h-3 w-3" /></button>
                               <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 hover:text-secondary"><Plus className="h-3 w-3" /></button>
+                              <button onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)} className="p-1 hover:text-secondary"><Plus className="h-3 w-3" /></button>
                             </div>
-                            <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                            <button onClick={() => removeFromCart(item.id, item.size)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
                           </div>
                         </div>
                       </div>
