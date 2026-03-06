@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { 
   ArrowLeft, 
@@ -256,44 +256,63 @@ export default function OrderDetailsPage() {
                  </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                 <Button 
-                   className="w-full bg-green-500 hover:bg-green-600 text-white font-black uppercase text-[10px] tracking-widest h-14 rounded-xl shadow-lg shadow-green-500/20 gap-3"
-                   onClick={() => updateStatus("Processing")}
-                   disabled={isUpdating}
-                 >
-                   <CheckCircle2 className="h-5 w-5" /> Confirm Payment
-                 </Button>
-                 <Button 
-                   className="w-full bg-secondary text-primary hover:bg-white font-black uppercase text-[10px] tracking-widest h-14 rounded-xl shadow-lg shadow-secondary/20 gap-3"
-                   onClick={() => updateStatus("Shipped")}
-                   disabled={isUpdating}
-                 >
-                   <Truck className="h-5 w-5" /> Dispatch Kicks
-                 </Button>
-                 <Button 
-                   variant="outline"
-                   className="w-full border-white/20 text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-widest h-14 rounded-xl gap-3"
-                   onClick={() => updateStatus("Delivered")}
-                   disabled={isUpdating}
-                 >
-                   <CheckCircle2 className="h-5 w-5" /> Mark Delivered
-                 </Button>
+                 {order.orderStatus === "Pending" && (
+                   <Button 
+                     className="w-full bg-green-500 hover:bg-green-600 text-white font-black uppercase text-[10px] tracking-widest h-14 rounded-xl shadow-lg shadow-green-500/20 gap-3"
+                     onClick={() => updateStatus("Processing")}
+                     disabled={isUpdating}
+                   >
+                     <CheckCircle2 className="h-5 w-5" /> Confirm Payment
+                   </Button>
+                 )}
+
+                 {(order.orderStatus === "Pending" || order.orderStatus === "Processing") && (
+                   <Button 
+                     className="w-full bg-secondary text-primary hover:bg-white font-black uppercase text-[10px] tracking-widest h-14 rounded-xl shadow-lg shadow-secondary/20 gap-3"
+                     onClick={() => updateStatus("Shipped")}
+                     disabled={isUpdating}
+                   >
+                     <Truck className="h-5 w-5" /> Dispatch Kicks
+                   </Button>
+                 )}
+
+                 {(order.orderStatus === "Pending" || order.orderStatus === "Processing" || order.orderStatus === "Shipped") && (
+                   <Button 
+                     variant="outline"
+                     className="w-full border-2 border-white/30 text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-widest h-14 rounded-xl gap-3 bg-transparent"
+                     onClick={() => updateStatus("Delivered")}
+                     disabled={isUpdating}
+                   >
+                     <CheckCircle2 className="h-5 w-5" /> Mark Delivered
+                   </Button>
+                 )}
+
                  <Separator className="bg-white/10 my-4" />
-                 <Button 
-                   variant="ghost"
-                   className="w-full text-white/50 hover:text-white hover:bg-destructive font-black uppercase text-[10px] tracking-widest h-14 rounded-xl gap-3"
-                   onClick={() => {if(confirm("Confirm Cancellation?")) updateStatus("Cancelled")}}
-                   disabled={isUpdating}
-                 >
-                   <XCircle className="h-5 w-5" /> Void Order
-                 </Button>
+                 
+                 {(order.orderStatus !== "Delivered" && order.orderStatus !== "Cancelled") && (
+                   <Button 
+                     variant="ghost"
+                     className="w-full text-white/50 hover:text-white hover:bg-destructive font-black uppercase text-[10px] tracking-widest h-14 rounded-xl gap-3"
+                     onClick={() => {if(confirm("Confirm Cancellation?")) updateStatus("Cancelled")}}
+                     disabled={isUpdating}
+                   >
+                     <XCircle className="h-5 w-5" /> Void Order
+                   </Button>
+                 )}
+
+                 {(order.orderStatus === "Delivered" || order.orderStatus === "Cancelled") && (
+                   <div className="text-center py-4 space-y-2">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-secondary">Workflow Complete</p>
+                     <p className="text-[9px] font-bold text-white/40">No further actions required for this order.</p>
+                   </div>
+                 )}
               </CardContent>
            </Card>
 
            <div className="p-8 bg-muted/20 border-2 border-dashed rounded-3xl text-center space-y-3">
               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">Status Awareness</p>
               <p className="text-[10px] font-bold text-muted-foreground leading-relaxed">
-                Updating status will automatically sync with the customer's account view and archive "Delivered" orders from your main desk.
+                Actions are progressive. Completing a step will narrow down the available next steps to keep your focus on fulfillment.
               </p>
            </div>
         </aside>
