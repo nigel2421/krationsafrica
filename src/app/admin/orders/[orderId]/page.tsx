@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useFirestore, useDoc } from "@/firebase";
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { 
   ArrowLeft, 
@@ -31,7 +32,11 @@ export default function OrderDetailsPage() {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const orderRef = orderId ? doc(db, "orders", orderId as string) : null;
+  const orderRef = useMemoFirebase(() => {
+    if (!db || !orderId) return null;
+    return doc(db, "orders", orderId as string);
+  }, [db, orderId]);
+
   const { data: order, isLoading } = useDoc(orderRef);
 
   const updateStatus = async (status: string) => {
