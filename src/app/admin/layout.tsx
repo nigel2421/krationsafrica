@@ -1,9 +1,8 @@
-
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useAuth } from "@/firebase";
 import { 
   LayoutDashboard, 
   Package, 
@@ -14,27 +13,52 @@ import {
   ShieldCheck,
   Menu,
   X,
-  Users
+  Users,
+  Wifi,
+  WifiOff,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
+import { onSnapshotsInSync } from "firebase/firestore";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const db = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
-  const [isMobileNavOpen, setIsMobileNavOpen] = React.useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push("/admin/login");
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (!db) return;
+    // Check if firestore can sync
+    const unsubscribe = onSnapshotsInSync(db, () => {
+      setIsOnline(true);
+    });
+    
+    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => setIsOnline(true);
+    
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    
+    return () => {
+      unsubscribe();
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [db]);
 
   const navItems = [
     { label: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -46,8 +70,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isUserLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-secondary" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-secondary mx-auto" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Authenticating Session...</p>
+        </div>
       </div>
     );
   }
@@ -55,29 +82,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen bg-muted/20">
+    <div className="flex min-h-screen bg-muted/10">
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex w-64 flex-col bg-primary text-white sticky top-0 h-screen">
-        <div className="p-6 h-20 flex items-center gap-2 border-b border-white/10">
-          <ShieldCheck className="h-8 w-8 text-secondary" />
-          <h1 className="text-xl font-black uppercase tracking-tighter">Admin CMS</h1>
+      <aside className="hidden lg:flex w-72 flex-col bg-primary text-white sticky top-0 h-screen shadow-2xl z-30">
+        <div className="p-8 h-24 flex items-center gap-3 border-b border-white/5">
+          <div className="bg-secondary p-2 rounded-xl">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black uppercase tracking-tighter leading-none">Admin CMS</h1>
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-secondary mt-1">Kreations 254</p>
+          </div>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2 mt-4">
+        <nav className="flex-1 p-6 space-y-1 mt-4">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.startsWith(item.href);
             return (
               <Button
                 key={item.href}
                 variant="ghost"
                 asChild
                 className={cn(
-                  "w-full justify-start font-bold uppercase text-xs tracking-widest h-12 gap-3 transition-all",
-                  isActive ? "bg-white/10 text-secondary border-r-4 border-secondary" : "text-white/70 hover:bg-white/5 hover:text-white"
+                  "w-full justify-start font-black uppercase text-[11px] tracking-widest h-14 gap-4 transition-all rounded-xl",
+                  isActive 
+                    ? "bg-white/10 text-secondary border-l-4 border-secondary pl-6" 
+                    : "text-white/60 hover:bg-white/5 hover:text-white pl-7"
                 )}
               >
                 <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-secondary" : "text-white/40")} />
                   {item.label}
                 </Link>
               </Button>
@@ -85,68 +119,104 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-6 border-t border-white/5 space-y-4">
+          <div className={cn(
+            "flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5",
+            isOnline ? "bg-green-500/10 text-green-400" : "bg-destructive/10 text-destructive"
+          )}>
+            {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              {isOnline ? "Sync Active" : "Offline / Blocked"}
+            </span>
+          </div>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-white/50 hover:text-white gap-3"
+            className="w-full justify-start text-white/40 hover:text-white hover:bg-white/5 h-12 gap-4 rounded-xl font-black uppercase text-[10px] tracking-widest"
             onClick={() => signOut(auth)}
           >
             <LogOut className="h-5 w-5" />
-            Logout
+            Logout Account
           </Button>
         </div>
       </aside>
 
-      {/* Mobile Nav Toggle */}
-      <div className="md:hidden fixed top-4 right-4 z-50">
-        <Button size="icon" className="rounded-full shadow-xl bg-primary text-white" onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}>
-          {isMobileNavOpen ? <X /> : <Menu />}
+      {/* Mobile Top Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b z-40 flex items-center justify-between px-6">
+        <div className="flex items-center gap-2">
+           <ShieldCheck className="h-6 w-6 text-secondary" />
+           <span className="font-black text-sm uppercase tracking-tighter">Admin Panel</span>
+        </div>
+        <Button variant="ghost" size="icon" className="rounded-xl bg-muted/30" onClick={() => setIsMobileNavOpen(true)}>
+          <Menu className="h-6 w-6" />
         </Button>
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-20 bg-white border-b flex items-center px-8 justify-between shrink-0">
-          <div className="flex items-center gap-2">
-             <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground">
-               {navItems.find(i => i.href === pathname)?.label || "Admin Console"}
-             </h2>
+      <main className="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
+        <header className="hidden lg:flex h-24 bg-white border-b items-center px-10 justify-between shrink-0 sticky top-0 z-20 shadow-sm">
+          <div className="flex items-center gap-6">
+             <div className="relative w-64">
+               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+               <input className="w-full bg-muted/30 h-10 rounded-xl pl-10 text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-secondary/50 border-none" placeholder="Quick Search..." />
+             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-black uppercase">{user.displayName || "Admin User"}</p>
-              <p className="text-[10px] text-muted-foreground font-mono">{user.email}</p>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-[11px] font-black uppercase tracking-widest">{user.displayName || "Authorized Admin"}</p>
+              <p className="text-[9px] text-muted-foreground font-mono font-bold">{user.email}</p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-muted border overflow-hidden">
+            <div className="h-12 w-12 rounded-2xl bg-muted border-2 border-muted overflow-hidden shadow-lg transform rotate-3">
                <img src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="Avatar" className="w-full h-full object-cover" />
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8">
-          {children}
+        <div className="flex-1 overflow-x-hidden p-6 lg:p-10">
+          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {children}
+          </div>
         </div>
       </main>
 
       {/* Mobile Nav Overlay */}
       {isMobileNavOpen && (
-        <div className="fixed inset-0 z-40 bg-primary/95 flex flex-col p-10 md:hidden animate-in fade-in zoom-in-95">
-          <div className="flex-1 space-y-6 mt-12">
+        <div className="fixed inset-0 z-50 bg-primary/98 flex flex-col p-10 lg:hidden animate-in fade-in zoom-in-95">
+          <div className="flex justify-between items-center mb-12">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-secondary" />
+              <span className="text-white text-2xl font-black tracking-tighter uppercase">Menu</span>
+            </div>
+            <Button size="icon" variant="ghost" className="text-white rounded-full h-12 w-12 bg-white/5" onClick={() => setIsMobileNavOpen(false)}>
+              <X className="h-8 w-8" />
+            </Button>
+          </div>
+          <div className="flex-1 space-y-2">
             {navItems.map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href} 
+              <Button
+                key={item.href}
+                variant="ghost"
+                asChild
+                className={cn(
+                  "w-full justify-start text-xl font-black uppercase tracking-tighter h-16 rounded-2xl px-6",
+                  pathname.startsWith(item.href) ? "bg-secondary text-primary" : "text-white/70"
+                )}
                 onClick={() => setIsMobileNavOpen(false)}
-                className="flex items-center gap-4 text-white text-2xl font-black uppercase tracking-tighter hover:text-secondary"
               >
-                <item.icon className="h-8 w-8" />
-                {item.label}
-              </Link>
+                <Link href={item.href}>
+                  <item.icon className="h-6 w-6 mr-4" />
+                  {item.label}
+                </Link>
+              </Button>
             ))}
           </div>
-          <Button variant="outline" className="text-white border-white mt-auto h-16 text-xl font-bold" onClick={() => signOut(auth)}>
-             LOGOUT
-          </Button>
+          <div className="pt-8 border-t border-white/10 space-y-4">
+             <div className="flex items-center justify-between text-white/40 px-4">
+                <span className="text-[10px] font-black uppercase tracking-widest">Logged in as {user.email}</span>
+             </div>
+             <Button variant="outline" className="w-full text-white border-white/20 h-16 rounded-2xl text-xl font-black uppercase tracking-tighter bg-white/5" onClick={() => signOut(auth)}>
+               SIGN OUT
+             </Button>
+          </div>
         </div>
       )}
     </div>

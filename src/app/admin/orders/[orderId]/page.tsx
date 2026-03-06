@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -10,15 +9,14 @@ import {
   Printer, 
   Phone, 
   MapPin, 
-  Calendar, 
   CheckCircle2, 
-  Clock, 
   Truck, 
   XCircle,
   CreditCard,
-  MessageCircle,
   Package,
-  Loader2
+  Loader2,
+  ExternalLink,
+  MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,38 +52,67 @@ export default function OrderDetailsPage() {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    // Use the existing receipt printing logic from user's account page but adapted for admin
     const date = order.orderedAt?.seconds 
       ? new Date(order.orderedAt.seconds * 1000).toLocaleDateString('en-KE', { dateStyle: 'long' }) 
       : 'Recent Order';
 
     const itemsHtml = order.items?.map((item: string) => `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 14px;">${item}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">Authentic</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; font-weight: 600;">${item}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right; font-weight: 800; color: #3AC8F3;">VERIFIED</td>
       </tr>
     `).join('') || '';
 
     printWindow.document.write(`
       <html>
-        <head><title>Receipt - ${order.id}</title></head>
-        <body style="font-family: sans-serif; padding: 40px; color: #333;">
-          <h1 style="text-align: center; border-bottom: 4px solid #3AC8F3; padding-bottom: 10px;">KREATIONS 254</h1>
-          <p style="text-align: center; font-weight: bold;">OFFICIAL RECEIPT</p>
-          <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div><p>Order ID: ${order.id}</p><p>Date: ${date}</p></div>
-            <div><p>Customer: ${order.customerName}</p><p>Phone: ${order.customerPhoneNumber}</p></div>
+        <head>
+          <title>Order Receipt - ${order.id}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #424266; line-height: 1.5; }
+            .header { text-align: center; margin-bottom: 50px; border-bottom: 8px solid #3AC8F3; padding-bottom: 20px; }
+            .brand { font-size: 32px; font-weight: 900; letter-spacing: -2px; }
+            .accent { color: #3AC8F3; }
+            .info { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+            .table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+            .table th { text-align: left; background: #f8f9fa; padding: 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; }
+            .totals { float: right; width: 300px; }
+            .total-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+            .grand-total { font-size: 24px; font-weight: 900; color: #3AC8F3; border: none; }
+            .footer { margin-top: 100px; text-align: center; border-top: 1px solid #eee; padding-top: 30px; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="brand">KREATIONS <span class="accent">254</span></div>
+            <p style="text-transform: uppercase; font-weight: 700; letter-spacing: 2px; font-size: 10px; margin-top: 5px;">Official Purchase Statement</p>
           </div>
-          <table style="width: 100%; border-collapse: collapse; margin-top: 40px;">
-            <thead><tr style="background: #f4f4f4;"><th style="padding: 10px; text-align: left;">Item</th><th style="padding: 10px; text-align: right;">Status</th></tr></thead>
+          <div class="info">
+            <div>
+              <p><strong>ORDER ID:</strong> ${order.id}</p>
+              <p><strong>DATE:</strong> ${date}</p>
+              <p><strong>STATUS:</strong> ${order.orderStatus}</p>
+            </div>
+            <div>
+              <p><strong>CUSTOMER:</strong> ${order.customerName}</p>
+              <p><strong>PHONE:</strong> ${order.customerPhoneNumber}</p>
+              <p><strong>LOCATION:</strong> ${order.deliveryLocation}</p>
+            </div>
+          </div>
+          <table class="table">
+            <thead><tr><th>Item Description</th><th style="text-align: right;">Quality Check</th></tr></thead>
             <tbody>${itemsHtml}</tbody>
           </table>
-          <div style="margin-top: 40px; text-align: right;">
-            <p>Subtotal: KES ${order.subtotal?.toLocaleString()}</p>
-            <p>Delivery: KES ${order.deliveryFee?.toLocaleString()}</p>
-            <h2 style="color: #3AC8F3;">Total: KES ${order.totalAmount?.toLocaleString()}</h2>
+          <div class="totals">
+            <div class="total-row"><span>Subtotal</span><span>KES ${order.subtotal?.toLocaleString() || (order.totalAmount - (order.deliveryFee || 0)).toLocaleString()}</span></div>
+            <div class="total-row"><span>Delivery</span><span>KES ${order.deliveryFee?.toLocaleString() || '0'}</span></div>
+            <div class="total-row grand-total"><span>Total Paid</span><span>KES ${order.totalAmount?.toLocaleString()}</span></div>
           </div>
-          <p style="text-align: center; margin-top: 100px; font-size: 12px; color: #888;">IT WILL ALWAYS LOOK GOOD ON YOU</p>
+          <div style="clear: both;"></div>
+          <div class="footer">
+            <p style="font-weight: 900; letter-spacing: 5px;">IT WILL ALWAYS LOOK GOOD ON YOU</p>
+            <p>Customer Support: +254 719 112025</p>
+          </div>
           <script>window.print();</script>
         </body>
       </html>
@@ -93,139 +120,171 @@ export default function OrderDetailsPage() {
     printWindow.document.close();
   };
 
-  if (isLoading) return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="animate-spin h-10 w-10 text-secondary" /></div>;
-  if (!order) return <div className="text-center py-20 font-black uppercase">Order Not Found</div>;
+  if (isLoading) return (
+    <div className="flex flex-col h-[60vh] items-center justify-center space-y-4">
+      <Loader2 className="animate-spin h-12 w-12 text-secondary" />
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Opening Order File...</p>
+    </div>
+  );
+
+  if (!order) return <div className="text-center py-20 font-black uppercase text-destructive tracking-widest">Order Entry Not Found</div>;
 
   return (
-    <div className="space-y-6 pb-20 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="font-bold gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back
+    <div className="space-y-8 pb-32 max-w-4xl mx-auto">
+      {/* Global Loader Overlay */}
+      {isUpdating && (
+        <div className="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-sm flex items-center justify-center">
+           <div className="bg-white p-6 rounded-2xl shadow-2xl flex items-center gap-4">
+              <Loader2 className="h-6 w-6 animate-spin text-secondary" />
+              <span className="font-black uppercase text-[10px] tracking-widest">Updating Database...</span>
+           </div>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="font-black uppercase text-[10px] tracking-widest gap-2 bg-white shadow-sm h-10 px-6 rounded-xl border border-muted">
+          <ArrowLeft className="h-4 w-4" /> Back to Desk
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrint} className="font-black text-[10px] uppercase border-2 gap-2">
-            <Printer className="h-3 w-3" /> Print Receipt
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-none font-black text-[10px] uppercase border-2 h-10 px-6 rounded-xl gap-2 bg-white" onClick={handlePrint}>
+            <Printer className="h-4 w-4" /> Print Receipt
+          </Button>
+          <Button className="flex-1 sm:flex-none bg-secondary text-primary hover:bg-white hover:text-primary border-2 border-secondary font-black text-[10px] uppercase h-10 px-6 rounded-xl gap-2 shadow-lg" asChild>
+            <a href={`https://wa.me/${order.customerPhoneNumber}`} target="_blank">
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </a>
           </Button>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-end">
-          <div className="space-y-1">
-            <Badge className="text-[10px] font-black uppercase tracking-widest">{order.id}</Badge>
-            <h1 className="text-3xl font-black uppercase tracking-tighter">{order.customerName}</h1>
-          </div>
-          <Badge variant="secondary" className="px-4 py-1 text-xs font-black uppercase">{order.orderStatus}</Badge>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="border-2 p-4 bg-muted/20">
-            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Payment Status</p>
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-secondary" />
-              <span className="font-black text-xs uppercase">{order.orderStatus === "Pending" ? "Awaiting Payment" : "Paid / Confirmed"}</span>
-            </div>
-          </Card>
-          <Card className="border-2 p-4 bg-muted/20">
-            <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Method</p>
-            <div className="flex items-center gap-2">
-              <Truck className="h-4 w-4 text-primary" />
-              <span className="font-black text-xs uppercase">{order.deliveryRegion}</span>
-            </div>
-          </Card>
-        </div>
-
-        <Card className="border-2 overflow-hidden">
-          <CardHeader className="bg-muted/50 p-4 border-b">
-            <CardTitle className="text-xs font-black uppercase tracking-widest">Customer Information</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-start gap-3">
-              <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="border-2 rounded-2xl overflow-hidden shadow-sm">
+            <CardHeader className="bg-muted/30 p-8 border-b flex flex-row items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Phone Number</p>
-                <p className="font-bold text-sm">{order.customerPhoneNumber}</p>
-                <Button variant="link" size="sm" asChild className="p-0 h-auto text-secondary text-[10px] font-black uppercase">
-                  <a href={`https://wa.me/${order.customerPhoneNumber}`} target="_blank">Chat on WhatsApp</a>
-                </Button>
+                <Badge className="text-[9px] font-black uppercase tracking-widest mb-2 px-3 py-1 bg-primary">{order.id}</Badge>
+                <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">{order.customerName}</h1>
               </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-[10px] font-black uppercase text-muted-foreground">Delivery Address</p>
-                <p className="font-bold text-sm">{order.deliveryLocation || "Store Pick-up (Nairobi CBD)"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              <Badge variant="secondary" className="px-5 py-2 text-xs font-black uppercase tracking-widest bg-secondary text-primary rounded-xl">
+                {order.orderStatus}
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="space-y-8">
+                 <div>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-4">Ordered Items</p>
+                    <div className="space-y-3">
+                      {order.items?.map((item: string, i: number) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border-2 border-transparent hover:border-secondary transition-all group">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center border shadow-sm group-hover:rotate-3 transition-transform">
+                              <Package className="h-5 w-5 text-secondary" />
+                            </div>
+                            <span className="font-black uppercase text-xs tracking-tight">{item}</span>
+                          </div>
+                          <CheckCircle2 className="h-4 w-4 text-secondary" />
+                        </div>
+                      ))}
+                    </div>
+                 </div>
 
-        <Card className="border-2">
-          <CardHeader className="bg-muted/50 p-4 border-b">
-            <CardTitle className="text-xs font-black uppercase tracking-widest">Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              {order.items?.map((item: string, i: number) => (
-                <div key={i} className="flex justify-between text-sm items-center py-2 border-b last:border-0">
-                  <span className="font-black uppercase text-[11px]">{item}</span>
-                  <Package className="h-3 w-3 text-muted-foreground" />
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 space-y-2">
-              <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
-                <span>Subtotal</span>
-                <span>KES {order.subtotal?.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
-                <span>Delivery</span>
-                <span>KES {order.deliveryFee?.toLocaleString()}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between items-center pt-2">
-                <span className="font-black uppercase text-sm">Grand Total</span>
-                <span className="text-2xl font-black text-secondary">KES {order.totalAmount?.toLocaleString()}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                 <Separator className="bg-muted/50" />
 
-        <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center text-muted-foreground">Action Center</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Button 
-              className="bg-green-600 hover:bg-green-700 font-black uppercase text-[10px] h-12"
-              onClick={() => updateStatus("Processing")}
-              disabled={isUpdating}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Mark Paid
-            </Button>
-            <Button 
-              className="bg-primary font-black uppercase text-[10px] h-12"
-              onClick={() => updateStatus("Shipped")}
-              disabled={isUpdating}
-            >
-              <Truck className="mr-2 h-4 w-4" /> Dispatch Order
-            </Button>
-            <Button 
-              variant="outline"
-              className="border-2 border-secondary text-secondary font-black uppercase text-[10px] h-12"
-              onClick={() => updateStatus("Delivered")}
-              disabled={isUpdating}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Complete Order
-            </Button>
-            <Button 
-              variant="destructive"
-              className="font-black uppercase text-[10px] h-12"
-              onClick={() => {if(confirm("Cancel this order?")) updateStatus("Cancelled")}}
-              disabled={isUpdating}
-            >
-              <XCircle className="mr-2 h-4 w-4" /> Cancel Order
-            </Button>
-          </div>
+                 <div className="grid sm:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Contact Details</p>
+                       <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+                             <Phone className="h-5 w-5" />
+                          </div>
+                          <div>
+                             <p className="text-[9px] font-black uppercase text-muted-foreground">Mobile Phone</p>
+                             <p className="font-bold text-sm tracking-tight">{order.customerPhoneNumber}</p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+                             <MapPin className="h-5 w-5" />
+                          </div>
+                          <div>
+                             <p className="text-[9px] font-black uppercase text-muted-foreground">Destination</p>
+                             <p className="font-bold text-sm tracking-tight leading-tight">{order.deliveryLocation || "Store Pick-up"}</p>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Billing Summary</p>
+                       <div className="space-y-2">
+                          <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
+                             <span>Subtotal</span>
+                             <span>KES {order.subtotal?.toLocaleString() || (order.totalAmount - (order.deliveryFee || 0)).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
+                             <span>Delivery</span>
+                             <span>KES {order.deliveryFee?.toLocaleString() || '0'}</span>
+                          </div>
+                          <Separator className="my-2" />
+                          <div className="flex justify-between items-center">
+                             <span className="font-black text-xs uppercase tracking-widest">Total</span>
+                             <span className="text-2xl font-black text-secondary tracking-tighter leading-none">KES {order.totalAmount?.toLocaleString()}</span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        <aside className="space-y-8">
+           <Card className="border-2 rounded-2xl overflow-hidden shadow-sm bg-primary text-white">
+              <CardHeader className="p-6 border-b border-white/10 bg-white/5">
+                 <CardTitle className="text-xs font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                   <CreditCard className="h-4 w-4" /> Action Center
+                 </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                 <Button 
+                   className="w-full bg-green-500 hover:bg-green-600 text-white font-black uppercase text-[10px] tracking-widest h-14 rounded-xl shadow-lg shadow-green-500/20 gap-3"
+                   onClick={() => updateStatus("Processing")}
+                   disabled={isUpdating}
+                 >
+                   <CheckCircle2 className="h-5 w-5" /> Confirm Payment
+                 </Button>
+                 <Button 
+                   className="w-full bg-secondary text-primary hover:bg-white font-black uppercase text-[10px] tracking-widest h-14 rounded-xl shadow-lg shadow-secondary/20 gap-3"
+                   onClick={() => updateStatus("Shipped")}
+                   disabled={isUpdating}
+                 >
+                   <Truck className="h-5 w-5" /> Dispatch Kicks
+                 </Button>
+                 <Button 
+                   variant="outline"
+                   className="w-full border-white/20 text-white hover:bg-white/10 font-black uppercase text-[10px] tracking-widest h-14 rounded-xl gap-3"
+                   onClick={() => updateStatus("Delivered")}
+                   disabled={isUpdating}
+                 >
+                   <CheckCircle2 className="h-5 w-5" /> Mark Delivered
+                 </Button>
+                 <Separator className="bg-white/10 my-4" />
+                 <Button 
+                   variant="ghost"
+                   className="w-full text-white/50 hover:text-white hover:bg-destructive font-black uppercase text-[10px] tracking-widest h-14 rounded-xl gap-3"
+                   onClick={() => {if(confirm("Confirm Cancellation?")) updateStatus("Cancelled")}}
+                   disabled={isUpdating}
+                 >
+                   <XCircle className="h-5 w-5" /> Void Order
+                 </Button>
+              </CardContent>
+           </Card>
+
+           <div className="p-8 bg-muted/20 border-2 border-dashed rounded-3xl text-center space-y-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">Status Awareness</p>
+              <p className="text-[10px] font-bold text-muted-foreground leading-relaxed">
+                Updating status will automatically sync with the customer's account view and archive "Delivered" orders from your main desk.
+              </p>
+           </div>
+        </aside>
       </div>
     </div>
   );
