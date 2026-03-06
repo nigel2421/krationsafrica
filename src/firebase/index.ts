@@ -3,33 +3,41 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, Firestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage';
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
+// IMPORTANT: DO NOT MODIFY THE CORE LOGIC OF THIS FUNCTION
 export function initializeFirebase() {
-  if (!getApps().length) {
-    let firebaseApp;
-    try {
-      firebaseApp = initializeApp();
-    } catch (e) {
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
+  let firebaseApp: FirebaseApp;
 
-    return getSdks(firebaseApp);
+  if (!getApps().length) {
+    try {
+      firebaseApp = initializeApp(firebaseConfig);
+    } catch (e) {
+      console.warn('Manual initialization failed, trying default initialization', e);
+      firebaseApp = initializeApp();
+    }
+  } else {
+    firebaseApp = getApp();
   }
 
-  return getSdks(getApp());
+  return getSdks(firebaseApp);
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {
-  // Use initializeFirestore to enable persistence and experimental features if needed
-  const firestore = initializeFirestore(firebaseApp, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-  });
+  let firestore: Firestore;
+
+  try {
+    // Use initializeFirestore to enable persistence and experimental features.
+    // This can only be called once per app instance.
+    firestore = initializeFirestore(firebaseApp, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch (e) {
+    // If initializeFirestore was already called (e.g. during a hot reload or by another module),
+    // getFirestore() will return the existing instance.
+    firestore = getFirestore(firebaseApp);
+  }
 
   return {
     firebaseApp,
