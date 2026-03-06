@@ -24,6 +24,7 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
+      // Set a cookie for middleware or other checks if needed
       document.cookie = "kicks_logged_in=true; path=/; max-age=3600";
       router.push("/admin/dashboard");
     }
@@ -34,29 +35,35 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Welcome Back", description: "Accessing admin console..." });
+      toast({ 
+        title: "Welcome Back", 
+        description: "Accessing admin console...",
+      });
+      // The useEffect will handle the redirect once auth state updates
     } catch (error: any) {
+      setLoading(false);
       toast({ 
         title: "Access Denied", 
-        description: "Invalid credentials. Admins must be added directly to the database.", 
+        description: "Invalid credentials. Please check your email and password.", 
         variant: "destructive" 
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   if (isUserLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-secondary" />
+      <div className="flex min-h-screen items-center justify-center bg-muted/20">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-secondary mx-auto" />
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Verifying Session...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-muted/20">
-      <Card className="w-full max-w-md shadow-2xl border-primary/10 overflow-hidden">
+      <Card className="w-full max-w-md shadow-2xl border-primary/10 overflow-hidden animate-in fade-in zoom-in duration-500">
         <CardHeader className="space-y-1 text-center bg-primary text-white pb-8">
           <ShieldCheck className="h-12 w-12 mx-auto mb-4 text-secondary" />
           <CardTitle className="text-4xl font-black tracking-tighter">KREATIONS 254</CardTitle>
@@ -76,6 +83,7 @@ export default function AdminLogin() {
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                   required 
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -90,11 +98,19 @@ export default function AdminLogin() {
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
+                  disabled={loading}
                 />
               </div>
             </div>
-            <Button type="submit" className="w-full h-14 font-black uppercase tracking-widest bg-primary hover:bg-primary/90" disabled={loading}>
-              {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : "Sign In to Console"}
+            <Button type="submit" className="w-full h-14 font-black uppercase tracking-widest bg-primary hover:bg-primary/90 transition-all" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Accessing Console...
+                </>
+              ) : (
+                "Sign In to Console"
+              )}
             </Button>
           </form>
         </CardContent>
