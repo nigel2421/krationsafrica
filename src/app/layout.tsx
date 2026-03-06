@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/hooks/use-cart";
@@ -42,7 +41,9 @@ export default function RootLayout({
           <WishlistProvider>
             <CartProvider>
               <Navbar />
-              {children}
+              <main className="min-h-screen">
+                {children}
+              </main>
               <Toaster />
             </CartProvider>
           </WishlistProvider>
