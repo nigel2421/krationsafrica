@@ -44,12 +44,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addToCart = (product: any) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
+      // Ensure we use the price passed (which accounts for offers)
+      const cartPrice = product.price;
+
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id 
+            ? { ...item, quantity: item.quantity + 1, price: cartPrice } 
+            : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { 
+        id: product.id, 
+        name: product.name, 
+        price: cartPrice, 
+        imageUrl: product.imageUrl, 
+        quantity: 1 
+      }];
     });
   };
 

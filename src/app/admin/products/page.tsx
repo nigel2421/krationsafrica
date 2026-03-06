@@ -125,7 +125,7 @@ export default function AdminInventory() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20 text-foreground">
        <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">Catalog</h1>
         <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Manage your shoe inventory</p>
@@ -136,7 +136,7 @@ export default function AdminInventory() {
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search catalog..." 
-            className="pl-10 h-10 border-2" 
+            className="pl-10 h-10 border-2 bg-background" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -147,7 +147,7 @@ export default function AdminInventory() {
       </div>
 
       {/* Desktop Table */}
-      <div className="hidden md:block bg-white border-2 rounded-xl overflow-hidden shadow-sm">
+      <div className="hidden md:block bg-white dark:bg-card border-2 rounded-xl overflow-hidden shadow-sm">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -165,14 +165,15 @@ export default function AdminInventory() {
             ) : filteredProducts?.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>
-                  <div className="h-12 w-12 rounded-lg overflow-hidden border">
+                  <div className="h-12 w-12 rounded-lg overflow-hidden border relative">
                     <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none text-[6px] font-black uppercase -rotate-45">K254</div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1">
-                      <span className="font-black text-primary uppercase text-xs">{product.name}</span>
+                      <span className="font-black text-primary dark:text-foreground uppercase text-xs">{product.name}</span>
                       {product.onOffer && <Star className="h-3 w-3 text-secondary fill-secondary" />}
                     </div>
                     <span className="text-[9px] font-bold text-muted-foreground uppercase">{product.brand}</span>
@@ -207,15 +208,16 @@ export default function AdminInventory() {
         {isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-secondary" /></div>
         ) : filteredProducts?.map((product) => (
-          <div key={product.id} className="bg-white border-2 rounded-xl p-3 flex gap-3 shadow-sm">
-            <div className="h-20 w-20 rounded-lg overflow-hidden border shrink-0">
+          <div key={product.id} className="bg-white dark:bg-card border-2 rounded-xl p-3 flex gap-3 shadow-sm">
+            <div className="h-20 w-20 rounded-lg overflow-hidden border shrink-0 relative">
               <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
+              <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none text-[8px] font-black uppercase -rotate-45">K254</div>
             </div>
             <div className="flex-1 flex flex-col justify-between py-0.5">
               <div>
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col">
-                    <h3 className="font-black text-[11px] uppercase text-primary leading-tight">{product.name}</h3>
+                    <h3 className="font-black text-[11px] uppercase text-primary dark:text-foreground leading-tight">{product.name}</h3>
                     {product.onOffer && <span className="text-[7px] font-black uppercase text-secondary">On Offer</span>}
                   </div>
                   <div className="text-right">
@@ -245,10 +247,10 @@ export default function AdminInventory() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="space-y-2"><Label>Name</Label><Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+                <div className="space-y-2"><Label>Name</Label><Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="bg-background" /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Brand</Label><Input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} /></div>
-                  <div className="space-y-2"><Label>Regular Price (KES)</Label><Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Brand</Label><Input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} className="bg-background" /></div>
+                  <div className="space-y-2"><Label>Regular Price (KES)</Label><Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="bg-background" /></div>
                 </div>
 
                 <div className="p-4 bg-secondary/5 border-2 border-secondary/20 rounded-xl space-y-4">
@@ -265,7 +267,7 @@ export default function AdminInventory() {
                   {form.onOffer && (
                     <div className="space-y-2 animate-in slide-in-from-top-2">
                       <Label>Offer Price (KES)</Label>
-                      <Input type="number" required={form.onOffer} value={form.offerPrice} onChange={e => setForm({...form, offerPrice: e.target.value})} className="border-secondary/50 focus:ring-secondary" />
+                      <Input type="number" required={form.onOffer} value={form.offerPrice} onChange={e => setForm({...form, offerPrice: e.target.value})} className="border-secondary/50 focus:ring-secondary bg-background" />
                     </div>
                   )}
                 </div>
@@ -274,7 +276,7 @@ export default function AdminInventory() {
                   <div className="space-y-2">
                     <Label>Category</Label>
                     <Select value={form.category} onValueChange={v => setForm({...form, category: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Sneakers">Sneakers</SelectItem>
                         <SelectItem value="Boots">Boots</SelectItem>
@@ -286,7 +288,7 @@ export default function AdminInventory() {
                   <div className="space-y-2">
                     <Label>Stock</Label>
                     <Select value={form.stockStatus} onValueChange={v => setForm({...form, stockStatus: v})}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="In Stock">In Stock</SelectItem>
                         <SelectItem value="Few Left">Few Left</SelectItem>
@@ -297,14 +299,14 @@ export default function AdminInventory() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between"><Label>Description</Label><Button type="button" variant="ghost" size="sm" onClick={handleAiGenerate} disabled={isAiGenerating} className="text-secondary font-black uppercase text-[9px] gap-1">{isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} AI Copy</Button></div>
-                  <Textarea rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+                  <Textarea rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="bg-background" />
                 </div>
               </div>
               <div className="space-y-4">
                 <Label>Sizes (EU)</Label>
                 <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border">
                   {SHOE_SIZES.map(size => (
-                    <div key={size} className="flex items-center space-x-2 bg-white px-2 py-1 rounded border">
+                    <div key={size} className="flex items-center space-x-2 bg-background px-2 py-1 rounded border">
                       <Checkbox id={`s-${size}`} checked={form.availableSizes.includes(size)} onCheckedChange={() => toggleSize(size)} />
                       <Label htmlFor={`s-${size}`} className="text-[10px] font-bold">{size}</Label>
                     </div>
@@ -312,7 +314,12 @@ export default function AdminInventory() {
                 </div>
                 <Label>Image</Label>
                 <MediaLibrary selectedUrl={form.imageUrl} onSelect={url => setForm({...form, imageUrl: url})} />
-                {form.imageUrl && <div className="h-32 w-full rounded-xl overflow-hidden border-2 border-secondary/20 mt-2"><img src={form.imageUrl} className="h-full w-full object-cover" /></div>}
+                {form.imageUrl && (
+                  <div className="h-32 w-full rounded-xl overflow-hidden border-2 border-secondary/20 mt-2 relative">
+                    <img src={form.imageUrl} className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none text-2xl font-black uppercase -rotate-45">K254</div>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>

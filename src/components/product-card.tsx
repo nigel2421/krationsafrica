@@ -37,7 +37,6 @@ export function ProductCard({ product }: ProductCardProps) {
   const effectivePrice = hasOffer ? product.offerPrice! : product.price;
 
   const handleAddToCart = () => {
-    // Add to cart with the effective (offer) price
     addToCart({ ...product, price: effectivePrice });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -59,11 +58,25 @@ export function ProductCard({ product }: ProductCardProps) {
           alt={product.name}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         
+        {/* Site-wide Watermark Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-15 select-none overflow-hidden">
+          <div className="text-primary font-black text-4xl whitespace-nowrap -rotate-45 scale-150 uppercase tracking-[0.5em]">
+            KREATIONS 254
+          </div>
+        </div>
+        
+        {/* Secondary Tiled Watermarks (Optional for higher security) */}
+        <div className="absolute inset-0 grid grid-cols-2 grid-rows-3 pointer-events-none z-10 opacity-5 select-none">
+           {[...Array(6)].map((_, i) => (
+             <div key={i} className="flex items-center justify-center text-[10px] font-black uppercase -rotate-12">K254</div>
+           ))}
+        </div>
+
         {/* Badges */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
+        <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
           {hasOffer && (
             <div className="bg-secondary text-primary font-black px-4 py-1.5 uppercase text-[10px] tracking-tighter flex items-center gap-1 shadow-lg">
               <Star className="h-3 w-3 fill-primary" /> SALE
@@ -81,20 +94,22 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Wishlist Button */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn(
-            "absolute top-4 right-4 rounded-full bg-white/50 backdrop-blur-md shadow-md hover:bg-white transition-all",
-            inWishlist && "text-destructive"
-          )}
-          onClick={toggleWishlist}
-        >
-          <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
-        </Button>
+        <div className="absolute top-4 right-4 z-20">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "rounded-full bg-white/50 backdrop-blur-md shadow-md hover:bg-white transition-all",
+              inWishlist && "text-destructive"
+            )}
+            onClick={toggleWishlist}
+          >
+            <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
+          </Button>
+        </div>
 
         {/* Rating Overlay */}
-        <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-[10px] font-black">
+        <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-white text-[10px] font-black z-20">
           <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
           4.8
         </div>

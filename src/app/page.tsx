@@ -46,6 +46,10 @@ export default function Home() {
             priority
             sizes="100vw"
           />
+          {/* Hero Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10 select-none">
+            <span className="text-white font-black text-[15vw] uppercase tracking-[0.5em] -rotate-12">KREATIONS 254</span>
+          </div>
         </div>
         <div className="container mx-auto px-4 relative z-10 text-center">
           <div className="max-w-5xl mx-auto">
@@ -139,8 +143,12 @@ export default function Home() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
+                  {/* Category Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-10 select-none">
+                    <div className="text-white font-black text-3xl whitespace-nowrap -rotate-45 scale-150 uppercase tracking-widest">KREATIONS 254</div>
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-8 w-full">
+                  <div className="absolute bottom-0 left-0 p-8 w-full z-20">
                     <h3 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">{cat.name}</h3>
                     <p className="text-secondary font-black flex items-center gap-2 group-hover:translate-x-2 transition-transform uppercase text-xs tracking-widest">
                       DISCOVER NOW <ArrowRight className="h-4 w-4" />
