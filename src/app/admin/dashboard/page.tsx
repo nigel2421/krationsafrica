@@ -46,6 +46,26 @@ export default function AdminDashboardOverview() {
   const totalRevenue = allOrders?.reduce((acc, order) => acc + (order.totalAmount || 0), 0) || 0;
   const pendingOrders = allOrders?.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length || 0;
 
+  // Dynamic Revenue Trends Calculation
+  const chartData = [
+    { name: "Mon", revenue: 0 },
+    { name: "Tue", revenue: 0 },
+    { name: "Wed", revenue: 0 },
+    { name: "Thu", revenue: 0 },
+    { name: "Fri", revenue: 0 },
+    { name: "Sat", revenue: 0 },
+    { name: "Sun", revenue: 0 },
+  ];
+
+  allOrders?.forEach(order => {
+    if (order.orderedAt?.seconds) {
+      const date = new Date(order.orderedAt.seconds * 1000);
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dataPoint = chartData.find(d => d.name === day);
+      if (dataPoint) dataPoint.revenue += (order.totalAmount || 0);
+    }
+  });
+
   const stats = [
     { label: "Total Revenue", value: `KES ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-500", href: "/admin/orders" },
     { label: "Active Orders", value: pendingOrders.toString(), icon: ShoppingBag, color: "text-secondary", href: "/admin/orders" },
@@ -123,17 +143,10 @@ export default function AdminDashboardOverview() {
           </CardHeader>
           <CardContent className="h-[300px] p-6">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[
-                { name: "Mon", revenue: totalRevenue * 0.1 },
-                { name: "Tue", revenue: totalRevenue * 0.15 },
-                { name: "Wed", revenue: totalRevenue * 0.12 },
-                { name: "Thu", revenue: totalRevenue * 0.18 },
-                { name: "Fri", revenue: totalRevenue * 0.2 },
-                { name: "Sat", revenue: totalRevenue * 0.12 },
-                { name: "Sun", revenue: totalRevenue * 0.13 },
-              ]}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <span className="sr-only">Gradient</span>
                     <stop offset="5%" stopColor="#3AC8F3" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#3AC8F3" stopOpacity={0}/>
                   </linearGradient>
