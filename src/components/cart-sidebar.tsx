@@ -59,17 +59,29 @@ export function CartSidebar() {
   const grandTotal = totalPrice + deliveryFee;
 
   const normalizePhone = (phone: string) => {
-    let cleaned = phone.trim().replace(/\s+/g, '');
+    let cleaned = phone.trim().replace(/\s+/g, '').replace(/-/g, '');
+    
+    // If it already has a plus, trust it
+    if (cleaned.startsWith('+')) {
+      return cleaned;
+    }
+    
+    // Check for regional country codes (Kenya 254, Uganda 256, Tanzania 255)
+    if (cleaned.startsWith('254') || cleaned.startsWith('256') || cleaned.startsWith('255')) {
+      return '+' + cleaned;
+    }
+    
+    // Default to Kenya if it starts with 0
     if (cleaned.startsWith('0')) {
       return '+254' + cleaned.substring(1);
     }
-    if (cleaned.startsWith('254')) {
-      return '+' + cleaned;
+    
+    // If no prefix and no 0, we can't be sure, but let's assume Kenya for digits only
+    if (/^\d+$/.test(cleaned)) {
+      return '+254' + cleaned;
     }
-    if (cleaned.startsWith('+254')) {
-      return cleaned;
-    }
-    return '+254' + cleaned;
+
+    return cleaned;
   };
 
   const generateOrderId = () => {
@@ -258,7 +270,8 @@ export function CartSidebar() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
-                <Input placeholder="0712345678" className="border-2 h-12 bg-background text-foreground" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                <Input placeholder="e.g. 0712345678 or +256..." className="border-2 h-12 bg-background text-foreground" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Include country code for regional orders (+256, +255)</p>
               </div>
               {deliveryMethod === "delivery" && (
                 <div className="space-y-1.5">

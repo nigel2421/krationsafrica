@@ -54,6 +54,8 @@ export default function OrderDetailsPage() {
   const generateWhatsAppLink = () => {
     if (!order) return "#";
     const status = order.orderStatus || "Pending";
+    // For WhatsApp links, we need the digits only, starting with country code.
+    // Our database stores it as '+254...', so we strip the '+'.
     const cleanPhone = order.customerPhoneNumber.replace(/\D/g, '');
     const message = `Hi ${order.customerName},\n\nThis is Kreations 254. We are updating you on your order *#${order.id}*.\n\n*Current Status:* ${status.toUpperCase()}\n\nThank you for choosing us! IT WILL ALWAYS LOOK GOOD ON YOU.`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
