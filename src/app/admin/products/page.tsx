@@ -149,6 +149,7 @@ export default function AdminInventory() {
         price: product.price,
         offerPrice: product.onOffer ? product.offerPrice : undefined,
         description: product.description,
+        isNewArrival: true,
       });
       setNewsletterHtml(result.html);
     } catch (e: any) {

@@ -37,6 +37,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 const DELIVERY_ZONES = [
   { id: "zone1", label: "Zone 1 (CBD & Close)", description: "CBD, Upperhill, Ngara, Pangani", fee: 200 },
