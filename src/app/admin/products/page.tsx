@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { MediaLibrary } from "@/components/admin/media-library";
 import { generateProductDescription } from "@/ai/flows/admin-product-description-generator";
@@ -32,6 +33,8 @@ export default function AdminInventory() {
     name: "",
     brand: "",
     price: "",
+    onOffer: false,
+    offerPrice: "",
     category: "Sneakers",
     gender: "Unisex",
     stockStatus: "In Stock",
@@ -65,6 +68,7 @@ export default function AdminInventory() {
       const data = {
         ...form,
         price: parseFloat(form.price),
+        offerPrice: form.onOffer ? parseFloat(form.offerPrice) : 0,
         slug,
         updatedAt: serverTimestamp(),
         createdAt: editingProduct ? editingProduct.createdAt : serverTimestamp(),
@@ -87,7 +91,7 @@ export default function AdminInventory() {
   const resetForm = () => {
     setEditingProduct(null);
     setForm({
-      name: "", brand: "", price: "", category: "Sneakers", gender: "Unisex",
+      name: "", brand: "", price: "", onOffer: false, offerPrice: "", category: "Sneakers", gender: "Unisex",
       stockStatus: "In Stock", description: "", materials: "", imageUrl: "", availableSizes: [],
     });
   };
@@ -97,6 +101,8 @@ export default function AdminInventory() {
     setForm({
       ...product,
       price: product.price.toString(),
+      offerPrice: product.offerPrice?.toString() || "",
+      onOffer: product.onOffer || false,
     });
     setDialogOpen(true);
   };
@@ -165,13 +171,25 @@ export default function AdminInventory() {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-black text-primary uppercase text-xs">{product.name}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-black text-primary uppercase text-xs">{product.name}</span>
+                      {product.onOffer && <Star className="h-3 w-3 text-secondary fill-secondary" />}
+                    </div>
                     <span className="text-[9px] font-bold text-muted-foreground uppercase">{product.brand}</span>
                   </div>
                 </TableCell>
                 <TableCell><Badge variant="outline" className="text-[9px] font-bold uppercase">{product.category}</Badge></TableCell>
                 <TableCell><Badge className="text-[9px] uppercase font-black">{product.stockStatus}</Badge></TableCell>
-                <TableCell className="font-black text-secondary text-xs">KES {product.price.toLocaleString()}</TableCell>
+                <TableCell className="font-black text-secondary text-xs">
+                  {product.onOffer ? (
+                    <div className="flex flex-col">
+                      <span className="text-[8px] text-muted-foreground line-through">KES {product.price.toLocaleString()}</span>
+                      <span>KES {product.offerPrice.toLocaleString()}</span>
+                    </div>
+                  ) : (
+                    <span>KES {product.price.toLocaleString()}</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
@@ -196,8 +214,14 @@ export default function AdminInventory() {
             <div className="flex-1 flex flex-col justify-between py-0.5">
               <div>
                 <div className="flex justify-between items-start">
-                  <h3 className="font-black text-[11px] uppercase text-primary leading-tight">{product.name}</h3>
-                  <p className="font-black text-xs text-secondary leading-none">KES {product.price.toLocaleString()}</p>
+                  <div className="flex flex-col">
+                    <h3 className="font-black text-[11px] uppercase text-primary leading-tight">{product.name}</h3>
+                    {product.onOffer && <span className="text-[7px] font-black uppercase text-secondary">On Offer</span>}
+                  </div>
+                  <div className="text-right">
+                    {product.onOffer && <p className="text-[8px] text-muted-foreground line-through">KES {product.price.toLocaleString()}</p>}
+                    <p className="font-black text-xs text-secondary leading-none">KES {(product.onOffer ? product.offerPrice : product.price).toLocaleString()}</p>
+                  </div>
                 </div>
                 <div className="flex gap-1 mt-1">
                   <Badge variant="outline" className="text-[7px] font-black uppercase px-1 h-3.5 leading-none">{product.category}</Badge>
@@ -224,8 +248,28 @@ export default function AdminInventory() {
                 <div className="space-y-2"><Label>Name</Label><Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>Brand</Label><Input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} /></div>
-                  <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Regular Price (KES)</Label><Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} /></div>
                 </div>
+
+                <div className="p-4 bg-secondary/5 border-2 border-secondary/20 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-black uppercase">Promotional Offer</Label>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase">Flag this pair for a special price</p>
+                    </div>
+                    <Switch 
+                      checked={form.onOffer} 
+                      onCheckedChange={(checked) => setForm({...form, onOffer: checked})} 
+                    />
+                  </div>
+                  {form.onOffer && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2">
+                      <Label>Offer Price (KES)</Label>
+                      <Input type="number" required={form.onOffer} value={form.offerPrice} onChange={e => setForm({...form, offerPrice: e.target.value})} className="border-secondary/50 focus:ring-secondary" />
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Category</Label>

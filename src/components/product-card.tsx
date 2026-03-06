@@ -16,6 +16,8 @@ interface ProductCardProps {
     name: string;
     brand?: string;
     price: number;
+    onOffer?: boolean;
+    offerPrice?: number;
     imageUrl: string;
     stockStatus: string;
     category: string;
@@ -27,12 +29,16 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [added, setAdded] = useState(false);
+  
   const isOutOfStock = product.stockStatus === "Out of Stock";
   const isFewLeft = product.stockStatus === "Few Left";
   const inWishlist = isInWishlist(product.id);
+  const hasOffer = product.onOffer && product.offerPrice && product.offerPrice < product.price;
+  const effectivePrice = hasOffer ? product.offerPrice! : product.price;
 
   const handleAddToCart = () => {
-    addToCart(product);
+    // Add to cart with the effective (offer) price
+    addToCart({ ...product, price: effectivePrice });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -58,6 +64,11 @@ export function ProductCard({ product }: ProductCardProps) {
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {hasOffer && (
+            <div className="bg-secondary text-primary font-black px-4 py-1.5 uppercase text-[10px] tracking-tighter flex items-center gap-1 shadow-lg">
+              <Star className="h-3 w-3 fill-primary" /> SALE
+            </div>
+          )}
           {isOutOfStock && (
             <Badge variant="destructive" className="font-black px-4 py-1.5 uppercase text-[10px] tracking-tighter">OUT OF STOCK</Badge>
           )}
@@ -97,10 +108,19 @@ export function ProductCard({ product }: ProductCardProps) {
         
         <div className="mt-auto flex items-center justify-between gap-4 pt-4 border-t border-muted">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-muted-foreground uppercase">Price</span>
-            <span className="text-2xl font-black text-secondary tracking-tighter leading-none">
-              KES {product.price.toLocaleString()}
+            <span className="text-[10px] font-black text-muted-foreground uppercase">
+              {hasOffer ? "Offer Price" : "Price"}
             </span>
+            <div className="flex flex-col leading-none">
+              {hasOffer && (
+                <span className="text-xs text-muted-foreground line-through font-bold mb-1">
+                  KES {product.price.toLocaleString()}
+                </span>
+              )}
+              <span className="text-2xl font-black text-secondary tracking-tighter">
+                KES {effectivePrice.toLocaleString()}
+              </span>
+            </div>
           </div>
           
           <Button

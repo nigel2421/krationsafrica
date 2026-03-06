@@ -10,6 +10,8 @@
         "name": { "type": "string" },
         "brand": { "type": "string" },
         "price": { "type": "number" },
+        "onOffer": { "type": "boolean", "description": "Whether the product is currently on promotion." },
+        "offerPrice": { "type": "number", "description": "The discounted price if the product is on offer." },
         "category": { "type": "string" },
         "gender": { "type": "string", "enum": ["Men", "Women", "Unisex", "Kids"] },
         "availableSizes": { "type": "array", "items": { "type": "string" } },
