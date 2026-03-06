@@ -38,11 +38,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
 
+  const isLoginPage = pathname === "/admin/login";
+
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    // Only redirect if we are NOT on the login page and not loading
+    if (!isUserLoading && !user && !isLoginPage) {
       router.push("/admin/login");
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, isLoginPage]);
 
   useEffect(() => {
     if (!db) return;
@@ -71,6 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: "Customers", href: "/admin/customers", icon: Users },
   ];
 
+  // If loading, show the spinner
   if (isUserLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -82,7 +86,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user) return null;
+  // If not logged in and not on login page, we are redirecting, so show nothing
+  if (!user && !isLoginPage) return null;
+
+  // If we are on the login page, just render the login content without the admin shell
+  if (isLoginPage) return <>{children}</>;
 
   return (
     <div className="flex min-h-screen bg-muted/10">
@@ -154,7 +162,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Button>
           <Button 
             variant="ghost" 
-            size="icon"
+            size="icon" 
             className="w-full h-10 text-white/20 hover:text-white"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           >
@@ -185,11 +193,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right">
-              <p className="text-[11px] font-black uppercase tracking-widest text-foreground">{user.displayName || "Authorized Admin"}</p>
-              <p className="text-[9px] text-muted-foreground font-mono font-bold">{user.email}</p>
+              <p className="text-[11px] font-black uppercase tracking-widest text-foreground">{user?.displayName || "Authorized Admin"}</p>
+              <p className="text-[9px] text-muted-foreground font-mono font-bold">{user?.email}</p>
             </div>
             <div className="h-12 w-12 rounded-2xl bg-muted border-2 border-muted overflow-hidden shadow-lg transform rotate-3">
-               <img src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="Avatar" className="w-full h-full object-cover" />
+               <img src={user?.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.email}`} alt="Avatar" className="w-full h-full object-cover" />
             </div>
           </div>
         </header>
@@ -234,7 +242,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div className="pt-8 border-t border-white/10 space-y-4">
              <div className="flex items-center justify-between text-white/40 px-4">
-                <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[200px]">Logged in as {user.email}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest truncate max-w-[200px]">Logged in as {user?.email}</span>
              </div>
              <Button variant="outline" className="w-full text-white border-white/20 h-16 rounded-2xl text-xl font-black uppercase tracking-tighter bg-white/5 hover:bg-destructive hover:border-destructive transition-colors" onClick={() => signOut(auth)}>
                SIGN OUT

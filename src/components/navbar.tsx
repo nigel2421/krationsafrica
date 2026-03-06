@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShoppingBag, Menu, Heart, Sun, Moon, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useWishlist } from "@/hooks/use-wishlist";
@@ -17,6 +18,10 @@ export function Navbar() {
   const { totalWishlistItems } = useWishlist();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const { user } = useUser();
+  const pathname = usePathname();
+
+  // Hide Navbar completely on admin routes
+  if (pathname.startsWith("/admin")) return null;
 
   useEffect(() => {
     if (document.documentElement.classList.contains("dark")) {
