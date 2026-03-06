@@ -16,7 +16,6 @@ import {
   CreditCard,
   Package,
   Loader2,
-  ExternalLink,
   MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,6 +49,13 @@ export default function OrderDetailsPage() {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const generateWhatsAppLink = () => {
+    if (!order) return "#";
+    const status = order.orderStatus || "Pending";
+    const message = `Hi ${order.customerName},\n\nThis is Kreations 254. We are updating you on your order *#${order.id}*.\n\n*Current Status:* ${status.toUpperCase()}\n\nThank you for choosing us! IT WILL ALWAYS LOOK GOOD ON YOU.`;
+    return `https://wa.me/${order.customerPhoneNumber}?text=${encodeURIComponent(message)}`;
   };
 
   const handlePrint = () => {
@@ -136,26 +142,25 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="space-y-8 pb-32 max-w-4xl mx-auto">
-      {/* Global Loader Overlay */}
       {isUpdating && (
         <div className="fixed inset-0 z-[100] bg-primary/20 backdrop-blur-sm flex items-center justify-center">
-           <div className="bg-white p-6 rounded-2xl shadow-2xl flex items-center gap-4">
+           <div className="bg-card p-6 rounded-2xl shadow-2xl flex items-center gap-4 border-2 border-secondary/20">
               <Loader2 className="h-6 w-6 animate-spin text-secondary" />
-              <span className="font-black uppercase text-[10px] tracking-widest">Updating Database...</span>
+              <span className="font-black uppercase text-[10px] tracking-widest text-foreground">Updating Database...</span>
            </div>
         </div>
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="font-black uppercase text-[10px] tracking-widest gap-2 bg-white shadow-sm h-10 px-6 rounded-xl border border-muted">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="font-black uppercase text-[10px] tracking-widest gap-2 bg-card text-foreground shadow-sm h-10 px-6 rounded-xl border border-muted">
           <ArrowLeft className="h-4 w-4" /> Back to Desk
         </Button>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none font-black text-[10px] uppercase border-2 h-10 px-6 rounded-xl gap-2 bg-white" onClick={handlePrint}>
+          <Button variant="outline" className="flex-1 sm:flex-none font-black text-[10px] uppercase border-2 h-10 px-6 rounded-xl gap-2 bg-card text-foreground" onClick={handlePrint}>
             <Printer className="h-4 w-4" /> Print Receipt
           </Button>
           <Button className="flex-1 sm:flex-none bg-secondary text-primary hover:bg-white hover:text-primary border-2 border-secondary font-black text-[10px] uppercase h-10 px-6 rounded-xl gap-2 shadow-lg" asChild>
-            <a href={`https://wa.me/${order.customerPhoneNumber}`} target="_blank">
+            <a href={generateWhatsAppLink()} target="_blank">
               <MessageCircle className="h-4 w-4" /> WhatsApp
             </a>
           </Button>
@@ -164,11 +169,11 @@ export default function OrderDetailsPage() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <Card className="border-2 rounded-2xl overflow-hidden shadow-sm">
+          <Card className="border-2 rounded-2xl overflow-hidden shadow-sm bg-card">
             <CardHeader className="bg-muted/30 p-8 border-b flex flex-row items-center justify-between">
               <div>
-                <Badge className="text-[9px] font-black uppercase tracking-widest mb-2 px-3 py-1 bg-primary">{order.id}</Badge>
-                <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">{order.customerName}</h1>
+                <Badge className="text-[9px] font-black uppercase tracking-widest mb-2 px-3 py-1 bg-primary text-white">{order.id}</Badge>
+                <h1 className="text-3xl font-black uppercase tracking-tighter leading-none text-foreground">{order.customerName}</h1>
               </div>
               <Badge variant="secondary" className="px-5 py-2 text-xs font-black uppercase tracking-widest bg-secondary text-primary rounded-xl">
                 {order.orderStatus}
@@ -182,10 +187,10 @@ export default function OrderDetailsPage() {
                       {order.items?.map((item: string, i: number) => (
                         <div key={i} className="flex items-center justify-between p-4 bg-muted/20 rounded-xl border-2 border-transparent hover:border-secondary transition-all group">
                           <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center border shadow-sm group-hover:rotate-3 transition-transform">
+                            <div className="h-10 w-10 bg-card rounded-lg flex items-center justify-center border shadow-sm group-hover:rotate-3 transition-transform">
                               <Package className="h-5 w-5 text-secondary" />
                             </div>
-                            <span className="font-black uppercase text-xs tracking-tight">{item}</span>
+                            <span className="font-black uppercase text-xs tracking-tight text-foreground">{item}</span>
                           </div>
                           <CheckCircle2 className="h-4 w-4 text-secondary" />
                         </div>
@@ -204,7 +209,7 @@ export default function OrderDetailsPage() {
                           </div>
                           <div>
                              <p className="text-[9px] font-black uppercase text-muted-foreground">Mobile Phone</p>
-                             <p className="font-bold text-sm tracking-tight">{order.customerPhoneNumber}</p>
+                             <p className="font-bold text-sm tracking-tight text-foreground">{order.customerPhoneNumber}</p>
                           </div>
                        </div>
                        <div className="flex items-center gap-4">
@@ -213,7 +218,7 @@ export default function OrderDetailsPage() {
                           </div>
                           <div>
                              <p className="text-[9px] font-black uppercase text-muted-foreground">Destination</p>
-                             <p className="font-bold text-sm tracking-tight leading-tight">{order.deliveryLocation || "Store Pick-up"}</p>
+                             <p className="font-bold text-sm tracking-tight leading-tight text-foreground">{order.deliveryLocation || "Store Pick-up"}</p>
                           </div>
                        </div>
                     </div>
@@ -222,15 +227,15 @@ export default function OrderDetailsPage() {
                        <div className="space-y-2">
                           <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
                              <span>Subtotal</span>
-                             <span>KES {order.subtotal?.toLocaleString() || (order.totalAmount - (order.deliveryFee || 0)).toLocaleString()}</span>
+                             <span className="text-foreground">KES {order.subtotal?.toLocaleString() || (order.totalAmount - (order.deliveryFee || 0)).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between text-xs font-bold uppercase text-muted-foreground">
                              <span>Delivery</span>
-                             <span>KES {order.deliveryFee?.toLocaleString() || '0'}</span>
+                             <span className="text-foreground">KES {order.deliveryFee?.toLocaleString() || '0'}</span>
                           </div>
                           <Separator className="my-2" />
                           <div className="flex justify-between items-center">
-                             <span className="font-black text-xs uppercase tracking-widest">Total</span>
+                             <span className="font-black text-xs uppercase tracking-widest text-foreground">Total</span>
                              <span className="text-2xl font-black text-secondary tracking-tighter leading-none">KES {order.totalAmount?.toLocaleString()}</span>
                           </div>
                        </div>
