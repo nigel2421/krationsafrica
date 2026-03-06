@@ -100,6 +100,14 @@ export default function ProductDetailPage() {
   const inWishlist = isInWishlist(product.id);
   const hasOffer = product.onOffer && product.offerPrice && product.offerPrice < product.price;
 
+  const toggleWishlist = () => {
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="container mx-auto px-4 py-8">
