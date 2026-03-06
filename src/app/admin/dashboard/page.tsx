@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -11,7 +10,8 @@ import {
   Loader2,
   DollarSign,
   Users,
-  AlertCircle
+  AlertCircle,
+  ShieldCheck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -95,7 +95,12 @@ export default function AdminDashboardOverview() {
           <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">Business Overview</h1>
           <p className="text-muted-foreground font-medium">Real-time performance metrics for Kreation 254.</p>
         </div>
-        <Badge variant="outline" className="h-8 border-2 font-bold px-4">Live Sync Active</Badge>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild className="font-bold border-2">
+            <Link href="/test"><ShieldCheck className="mr-2 h-4 w-4 text-secondary" /> Run Diagnostics</Link>
+          </Button>
+          <Badge variant="outline" className="h-8 border-2 font-bold px-4">Live Sync Active</Badge>
+        </div>
       </div>
 
       {productsError && (
