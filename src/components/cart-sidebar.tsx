@@ -19,7 +19,10 @@ import {
   MapPinned,
   CreditCard,
   Building2,
-  UserCheck
+  UserCheck,
+  Copy,
+  CheckCircle2,
+  ShieldCheck
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -31,7 +34,7 @@ import { useUser, useFirestore } from "@/firebase";
 import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const DELIVERY_ZONES = [
   { id: "zone1", label: "Zone 1 (CBD & Close)", description: "CBD, Upperhill, Ngara, Pangani", fee: 200 },
@@ -48,6 +51,8 @@ export function CartSidebar() {
   
   const [checkoutStep, setCheckoutStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
   const [selectedZone, setSelectedZone] = useState<string>("");
   
@@ -60,6 +65,11 @@ export function CartSidebar() {
 
   const deliveryFee = deliveryMethod === "delivery" ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.fee || 0) : 0;
   const grandTotal = totalPrice + deliveryFee;
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied!", description: `${label} copied to clipboard.` });
+  };
 
   const normalizePhone = (phone: string) => {
     let cleaned = phone.trim().replace(/\s+/g, '').replace(/-/g, '');
@@ -79,6 +89,11 @@ export function CartSidebar() {
   };
 
   const handleWhatsAppCheckout = async () => {
+    if (!acceptedTerms) {
+      toast({ title: "Action Required", description: "Please accept the terms to continue.", variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const storeNumber = "254712345678";
@@ -137,9 +152,13 @@ export function CartSidebar() {
         `Please share the confirmation code or screenshot below once paid. IT WILL ALWAYS LOOK GOOD ON YOU!`;
 
       const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/${storeNumber}?text=${encodedMessage}`, "_blank");
-      clearCart();
-      toast({ title: "Order Initiated", description: "WhatsApp is opening with your payment details." });
+      setIsSuccess(true);
+      setTimeout(() => {
+        window.open(`https://wa.me/${storeNumber}?text=${encodedMessage}`, "_blank");
+        clearCart();
+        setCheckoutStep(1);
+        setIsSuccess(false);
+      }, 2000);
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
@@ -147,13 +166,36 @@ export function CartSidebar() {
     }
   };
 
+  if (isSuccess) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center space-y-6 animate-in fade-in zoom-in duration-500">
+        <div className="bg-green-500/10 p-6 rounded-full border-4 border-green-500">
+          <CheckCircle2 className="h-16 w-16 text-green-500" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-black uppercase tracking-tighter">Order Placed!</h2>
+          <p className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Redirecting to WhatsApp for confirmation...</p>
+        </div>
+        <p className="text-sm font-medium leading-relaxed">
+          Your order <strong>{details.name}</strong> has been received. Please share your payment reference in the chat thread.
+        </p>
+        <Loader2 className="h-6 w-6 animate-spin text-secondary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col bg-background text-foreground overflow-hidden">
-      <ScrollArea className="flex-1 p-4 md:p-6 pb-32">
+      <ScrollArea className="flex-1 p-4 md:p-6 pb-40">
         {checkoutStep === 1 && (
           <div className="space-y-6">
             <h3 className="font-black text-lg uppercase tracking-tight">Review Items</h3>
-            {cart.map((item) => (
+            {cart.length === 0 ? (
+              <div className="py-20 text-center">
+                <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="font-black uppercase text-xs text-muted-foreground">Your cart is empty</p>
+              </div>
+            ) : cart.map((item) => (
               <div key={item.id} className="flex gap-4 group">
                 <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors shrink-0">
                   <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
@@ -245,7 +287,6 @@ export function CartSidebar() {
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">WhatsApp Number</Label>
                 <Input placeholder="0712345678" className="border-2 h-12 bg-background" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
-                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Ensure this is an active WhatsApp line for updates.</p>
               </div>
               {deliveryMethod === "delivery" && (
                 <div className="space-y-1.5">
@@ -267,10 +308,11 @@ export function CartSidebar() {
               <div className="bg-secondary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto border-2 border-secondary/20">
                 <ShieldAlert className="h-10 w-10 text-secondary" />
               </div>
-              <h3 className="font-black text-2xl uppercase tracking-tighter">Payment Required</h3>
-              <p className="text-muted-foreground text-sm font-medium">To secure your order, please complete the payment below.</p>
+              <h3 className="font-black text-2xl uppercase tracking-tighter">Payment Instructions</h3>
+              <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Complete payment to finalize your order.</p>
             </div>
 
+            {/* Professional Payment Card */}
             <div className="bg-[#1E40AF] text-white p-1 rounded-3xl overflow-hidden shadow-2xl">
               <div className="bg-[#2563EB] p-8 space-y-8">
                 <div className="flex items-center justify-between">
@@ -281,14 +323,24 @@ export function CartSidebar() {
                   <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase">M-PESA</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/10 p-4 rounded-2xl space-y-1">
-                    <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">Business No</p>
-                    <p className="text-2xl font-black tracking-tight">222 111</p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-white/10 p-6 rounded-2xl relative group">
+                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-2">Business No (Paybill)</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-3xl font-black tracking-tight">222 111</p>
+                      <Button size="icon" variant="ghost" className="text-white hover:bg-white/20" onClick={() => copyToClipboard("222111", "Paybill Number")}>
+                        <Copy className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="bg-white/10 p-4 rounded-2xl space-y-1">
-                    <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">Account No</p>
-                    <p className="text-2xl font-black tracking-tight">172 754</p>
+                  <div className="bg-white/10 p-6 rounded-2xl relative group">
+                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-2">Account No</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-3xl font-black tracking-tight">172 754</p>
+                      <Button size="icon" variant="ghost" className="text-white hover:bg-white/20" onClick={() => copyToClipboard("172754", "Account Number")}>
+                        <Copy className="h-5 w-5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -307,32 +359,35 @@ export function CartSidebar() {
 
             <div className="bg-muted/30 p-6 rounded-2xl space-y-4 border-2 border-dashed">
               <h4 className="font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                <CreditCard className="h-4 w-4" /> Next Steps
+                <ShieldCheck className="h-4 w-4 text-secondary" /> Secure Checkout
               </h4>
-              <ul className="space-y-3 text-xs font-medium text-muted-foreground">
-                <li className="flex gap-3">
-                  <span className="h-5 w-5 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[10px] font-black shrink-0">1</span>
-                  <span>Make payment using the Paybill details above.</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="h-5 w-5 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[10px] font-black shrink-0">2</span>
-                  <span>Click "Open WhatsApp" below to share your details.</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="h-5 w-5 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[10px] font-black shrink-0">3</span>
-                  <span>Reply on WhatsApp with your M-Pesa confirmation.</span>
-                </li>
-              </ul>
+              <div className="space-y-4">
+                <p className="text-[11px] font-medium leading-relaxed">
+                  1. Copy the <strong>Paybill</strong> and <strong>Account Number</strong>.<br/>
+                  2. Make your payment via M-Pesa.<br/>
+                  3. Share your <strong>Payment Reference</strong> or Screenshot on the WhatsApp thread that opens next.
+                </p>
+                <div className="flex items-start space-x-3 pt-2">
+                  <Checkbox 
+                    id="terms" 
+                    checked={acceptedTerms} 
+                    onCheckedChange={(v) => setAcceptedTerms(!!v)} 
+                  />
+                  <Label htmlFor="terms" className="text-[10px] font-bold leading-none cursor-pointer uppercase tracking-tight">
+                    I agree to share my payment confirmation via WhatsApp to finalize the order.
+                  </Label>
+                </div>
+              </div>
             </div>
             
-            <div className="pb-10 text-center">
-               <p className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.5em]">ALWAYS LOOK GOOD ON YOU</p>
+            <div className="pb-10 text-center opacity-30">
+               <p className="text-[8px] font-black uppercase tracking-[0.5em]">KREATIONS KICKS 254</p>
             </div>
           </div>
         )}
       </ScrollArea>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-10 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)]">
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-20 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)]">
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between text-[10px] font-black uppercase text-muted-foreground tracking-widest">
             <span>Subtotal</span>
@@ -351,7 +406,7 @@ export function CartSidebar() {
         </div>
 
         <div className="flex gap-2">
-          {checkoutStep > 1 && (
+          {checkoutStep > 1 && !isSubmitting && (
             <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep(prev => prev - 1)}>
               <ChevronLeft className="h-6 w-6" />
             </Button>
@@ -360,7 +415,7 @@ export function CartSidebar() {
           {checkoutStep < 4 ? (
             <Button 
               onClick={() => setCheckoutStep(prev => prev + 1)} 
-              disabled={(checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
+              disabled={cart.length === 0 || (checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
               className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary"
             >
               Continue <ChevronRight className="ml-2 h-5 w-5" />
@@ -368,8 +423,10 @@ export function CartSidebar() {
           ) : (
             <Button 
               onClick={handleWhatsAppCheckout} 
-              disabled={isSubmitting}
-              className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-[#25D366] hover:bg-[#128C7E] text-white border-none shadow-lg"
+              disabled={isSubmitting || !acceptedTerms}
+              className={`flex-1 h-14 text-lg font-black uppercase tracking-widest text-white border-none shadow-lg transition-all ${
+                acceptedTerms ? "bg-[#25D366] hover:bg-[#128C7E]" : "bg-muted text-muted-foreground"
+              }`}
             >
               {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><MessageCircle className="mr-2 h-6 w-6" /> Open WhatsApp</>}
             </Button>
