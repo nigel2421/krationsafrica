@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package, Star, Mail, Copy, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package, Star, Mail, Copy, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import { generateProductDescription } from "@/ai/flows/admin-product-description
 import { generateNewsletterHtml } from "@/ai/flows/newsletter-generator";
 
 const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminInventory() {
   const db = useFirestore();
@@ -29,6 +30,7 @@ export default function AdminInventory() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Newsletter Logic
   const [newsletterOpen, setNewsletterOpen] = useState(false);
@@ -57,7 +59,11 @@ export default function AdminInventory() {
   const filteredProducts = products?.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
+
+  // Pagination Logic
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const toggleSize = (size: string) => {
     setForm(prev => ({
@@ -171,7 +177,7 @@ export default function AdminInventory() {
             placeholder="Search catalog..." 
             className="pl-10 h-10 border-2 bg-background" 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
         <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="font-black uppercase tracking-widest bg-secondary text-secondary-foreground">
@@ -195,7 +201,7 @@ export default function AdminInventory() {
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={6} className="h-32 text-center text-[10px] font-black uppercase">Loading Inventory...</TableCell></TableRow>
-            ) : filteredProducts?.map((product) => (
+            ) : paginatedProducts.length > 0 ? paginatedProducts.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>
                   <div className="h-12 w-12 rounded-lg overflow-hidden border relative">
@@ -232,7 +238,9 @@ export default function AdminInventory() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow><TableCell colSpan={6} className="h-32 text-center text-[10px] font-black uppercase text-muted-foreground">No items found</TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -241,7 +249,7 @@ export default function AdminInventory() {
       <div className="md:hidden space-y-4">
         {isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-secondary" /></div>
-        ) : filteredProducts?.map((product) => (
+        ) : paginatedProducts.map((product) => (
           <div key={product.id} className="bg-white dark:bg-card border-2 rounded-xl p-3 flex gap-3 shadow-sm">
             <div className="h-20 w-20 rounded-lg overflow-hidden border shrink-0 relative">
               <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
@@ -269,6 +277,40 @@ export default function AdminInventory() {
           </div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredProducts.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between pt-4 border-t-2">
+          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+            Showing {Math.min(filteredProducts.length, ITEMS_PER_PAGE * (currentPage - 1) + 1)} - {Math.min(filteredProducts.length, ITEMS_PER_PAGE * currentPage)} of {filteredProducts.length}
+          </p>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0 border-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1 px-4 bg-muted/20 rounded-lg border-2">
+              <span className="text-[10px] font-black uppercase">{currentPage}</span>
+              <span className="text-[10px] font-bold text-muted-foreground">/</span>
+              <span className="text-[10px] font-black text-muted-foreground">{totalPages}</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0 border-2"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Product Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

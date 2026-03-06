@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -23,7 +24,9 @@ import {
   Search,
   ExternalLink,
   CheckCircle2,
-  Copy
+  Copy,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +40,10 @@ interface MediaItem {
   url: string;
   name: string;
   createdAt: any;
+  storagePath?: string;
 }
+
+const ITEMS_PER_PAGE = 18;
 
 export default function AdminMedia() {
   const db = useFirestore();
@@ -48,6 +54,7 @@ export default function AdminMedia() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchMedia = async () => {
     if (!db) return;
@@ -99,21 +106,15 @@ export default function AdminMedia() {
     }
   };
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: MediaItem) => {
     if (!confirm("Permanently delete this asset? This cannot be undone.")) return;
     
     try {
-      // 1. Try to delete from storage if path exists
       if (item.storagePath) {
         const storageRef = ref(storage, item.storagePath);
         await deleteObject(storageRef);
-      } else {
-        // Fallback for older items that might not have storagePath recorded
-        // We try to extract it from the URL if possible, or just delete the DB record
-        console.warn("No storage path found for item, deleting DB record only.");
       }
 
-      // 2. Delete from Firestore
       await deleteDoc(doc(db, "media", item.id));
       
       toast({ title: "Asset Deleted", description: "The image has been removed from cloud storage." });
@@ -121,7 +122,6 @@ export default function AdminMedia() {
     } catch (e: any) {
       console.error(e);
       toast({ title: "Partial Deletion", description: "Record removed, but file might persist in storage.", variant: "destructive" });
-      // Still remove from UI
       await deleteDoc(doc(db, "media", item.id)).catch(() => {});
       setImages(images.filter(img => img.id !== item.id));
     }
@@ -135,6 +135,10 @@ export default function AdminMedia() {
   const filteredImages = images.filter(img => 
     img.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination Logic
+  const totalPages = Math.max(1, Math.ceil(filteredImages.length / ITEMS_PER_PAGE));
+  const paginatedImages = filteredImages.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-8 pb-20">
@@ -150,7 +154,7 @@ export default function AdminMedia() {
               placeholder="Filter assets..." 
               className="pl-10 h-11 border-2 bg-background" 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             />
           </div>
           <Label htmlFor="media-upload" className="cursor-pointer shrink-0">
@@ -188,29 +192,65 @@ export default function AdminMedia() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-          {filteredImages.map((img) => (
-            <div key={img.id} className="group relative bg-card border-2 rounded-xl overflow-hidden hover:border-secondary transition-all shadow-sm">
-              <div className="aspect-square relative bg-muted overflow-hidden">
-                <img src={img.url} alt={img.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                   <Button size="sm" variant="secondary" className="w-full font-bold text-[10px] uppercase h-8" onClick={() => copyUrl(img.url)}>
-                     <Copy className="h-3 w-3 mr-1" /> Copy Link
-                   </Button>
-                   <Button size="sm" variant="destructive" className="w-full font-bold text-[10px] uppercase h-8" onClick={() => handleDelete(img)}>
-                     <Trash2 className="h-3 w-3 mr-1" /> Delete
-                   </Button>
+        <div className="space-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+            {paginatedImages.map((img) => (
+              <div key={img.id} className="group relative bg-card border-2 rounded-xl overflow-hidden hover:border-secondary transition-all shadow-sm">
+                <div className="aspect-square relative bg-muted overflow-hidden">
+                  <img src={img.url} alt={img.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                     <Button size="sm" variant="secondary" className="w-full font-bold text-[10px] uppercase h-8" onClick={() => copyUrl(img.url)}>
+                       <Copy className="h-3 w-3 mr-1" /> Copy Link
+                     </Button>
+                     <Button size="sm" variant="destructive" className="w-full font-bold text-[10px] uppercase h-8" onClick={() => handleDelete(img)}>
+                       <Trash2 className="h-3 w-3 mr-1" /> Delete
+                     </Button>
+                  </div>
+                </div>
+                <div className="p-3 bg-card border-t">
+                  <p className="text-[10px] font-black uppercase truncate text-foreground mb-1">{img.name}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase">{img.createdAt?.seconds ? new Date(img.createdAt.seconds * 1000).toLocaleDateString() : "Recent"}</span>
+                    <a href={img.url} target="_blank" className="text-secondary hover:text-primary"><ExternalLink className="h-3 w-3" /></a>
+                  </div>
                 </div>
               </div>
-              <div className="p-3 bg-card border-t">
-                <p className="text-[10px] font-black uppercase truncate text-foreground mb-1">{img.name}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase">{img.createdAt?.seconds ? new Date(img.createdAt.seconds * 1000).toLocaleDateString() : "Recent"}</span>
-                  <a href={img.url} target="_blank" className="text-secondary hover:text-primary"><ExternalLink className="h-3 w-3" /></a>
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {filteredImages.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between pt-8 border-t-2">
+              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                Showing {Math.min(filteredImages.length, ITEMS_PER_PAGE * (currentPage - 1) + 1)} - {Math.min(filteredImages.length, ITEMS_PER_PAGE * currentPage)} of {filteredImages.length}
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 p-0 border-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1 px-4 bg-muted/20 rounded-lg border-2">
+                  <span className="text-[10px] font-black uppercase">{currentPage}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground">/</span>
+                  <span className="text-[10px] font-black text-muted-foreground">{totalPages}</span>
                 </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 p-0 border-2"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>

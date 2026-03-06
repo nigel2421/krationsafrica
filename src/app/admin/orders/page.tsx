@@ -13,7 +13,8 @@ import {
   Filter,
   History,
   Activity,
-  Loader2
+  Loader2,
+  ChevronLeft
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminOrders() {
   const db = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"active" | "past">("active");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const ordersQuery = useMemoFirebase(() => query(collection(db, "orders"), orderBy("orderedAt", "desc")), [db]);
   const { data: orders, isLoading } = useCollection(ordersQuery);
@@ -38,7 +42,11 @@ export default function AdminOrders() {
     
     if (view === "active") return matchesSearch && isActive;
     return matchesSearch && !isActive;
-  });
+  }) || [];
+
+  // Pagination Logic
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6 pb-20">
@@ -54,10 +62,10 @@ export default function AdminOrders() {
             placeholder="Search by name or ID..." 
             className="pl-10 h-10 border-2 bg-background text-foreground" 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
-        <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full md:w-auto">
+        <Tabs value={view} onValueChange={(v: any) => { setView(v); setCurrentPage(1); }} className="w-full md:w-auto">
           <TabsList className="grid w-full grid-cols-2 h-10 border-2 bg-muted/20">
             <TabsTrigger value="active" className="font-black text-[10px] uppercase gap-2">
               <Activity className="h-3 w-3" /> Active
@@ -85,7 +93,7 @@ export default function AdminOrders() {
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={6} className="h-32 text-center text-[10px] font-black uppercase text-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-secondary" /> Syncing Orders...</TableCell></TableRow>
-            ) : filteredOrders?.map((order) => (
+            ) : paginatedOrders.length > 0 ? paginatedOrders.map((order) => (
               <TableRow key={order.id} className="hover:bg-muted/10 transition-colors">
                 <TableCell className="font-black text-xs uppercase text-primary dark:text-secondary">{order.id}</TableCell>
                 <TableCell>
@@ -109,7 +117,9 @@ export default function AdminOrders() {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow><TableCell colSpan={6} className="h-32 text-center text-[10px] font-black uppercase text-muted-foreground">No matching orders found</TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -118,7 +128,7 @@ export default function AdminOrders() {
       <div className="md:hidden space-y-4">
         {isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-secondary" /></div>
-        ) : filteredOrders?.map((order) => (
+        ) : paginatedOrders.map((order) => (
           <Link key={order.id} href={`/admin/orders/${order.id}`} className="block">
             <div className="bg-card border-2 rounded-xl p-4 shadow-sm active:scale-[0.98] transition-all hover:border-secondary">
               <div className="flex justify-between items-start mb-3">
@@ -147,12 +157,41 @@ export default function AdminOrders() {
             </div>
           </Link>
         ))}
-        {!filteredOrders?.length && !isLoading && (
-          <div className="text-center py-20 bg-muted/20 border-2 border-dashed rounded-xl">
-            <p className="text-[10px] font-black uppercase text-muted-foreground">No matching orders found</p>
-          </div>
-        )}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredOrders.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between pt-4 border-t-2">
+          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+            Showing {Math.min(filteredOrders.length, ITEMS_PER_PAGE * (currentPage - 1) + 1)} - {Math.min(filteredOrders.length, ITEMS_PER_PAGE * currentPage)} of {filteredOrders.length}
+          </p>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0 border-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1 px-4 bg-muted/20 rounded-lg border-2">
+              <span className="text-[10px] font-black uppercase">{currentPage}</span>
+              <span className="text-[10px] font-bold text-muted-foreground">/</span>
+              <span className="text-[10px] font-black text-muted-foreground">{totalPages}</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0 border-2"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

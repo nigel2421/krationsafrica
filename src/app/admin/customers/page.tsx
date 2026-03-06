@@ -12,16 +12,22 @@ import {
   Shield, 
   User as UserIcon,
   Loader2,
-  Phone
+  Phone,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+
+const ITEMS_PER_PAGE = 15;
 
 export default function AdminCustomers() {
   const db = useFirestore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const customersQuery = useMemoFirebase(() => query(collection(db, "userProfiles"), orderBy("email", "asc")), [db]);
   const { data: customers, isLoading } = useCollection(customersQuery);
@@ -29,7 +35,11 @@ export default function AdminCustomers() {
   const filteredCustomers = customers?.filter(c => 
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
+
+  // Pagination Logic
+  const totalPages = Math.max(1, Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE));
+  const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6 pb-20">
@@ -44,7 +54,7 @@ export default function AdminCustomers() {
           placeholder="Search by name or email..." 
           className="pl-10 h-10 border-2" 
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
         />
       </div>
 
@@ -62,7 +72,7 @@ export default function AdminCustomers() {
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={4} className="h-32 text-center text-[10px] font-black uppercase">Loading Shoppers...</TableCell></TableRow>
-            ) : filteredCustomers?.map((customer) => (
+            ) : paginatedCustomers.length > 0 ? paginatedCustomers.map((customer) => (
               <TableRow key={customer.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -83,7 +93,9 @@ export default function AdminCustomers() {
                   {customer.createdAt?.seconds ? new Date(customer.createdAt.seconds * 1000).toLocaleDateString() : "Recent"}
                 </TableCell>
               </TableRow>
-            ))}
+            )) : (
+              <TableRow><TableCell colSpan={4} className="h-32 text-center text-[10px] font-black uppercase text-muted-foreground">No customers found</TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -92,7 +104,7 @@ export default function AdminCustomers() {
       <div className="md:hidden space-y-4">
         {isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-secondary" /></div>
-        ) : filteredCustomers?.map((customer) => (
+        ) : paginatedCustomers.map((customer) => (
           <div key={customer.id} className="bg-white border-2 rounded-xl p-4 shadow-sm flex items-center gap-4">
             <Avatar className="h-12 w-12 border-2">
               <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${customer.email}`} />
@@ -113,6 +125,40 @@ export default function AdminCustomers() {
           </div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredCustomers.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between pt-4 border-t-2">
+          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+            Showing {Math.min(filteredCustomers.length, ITEMS_PER_PAGE * (currentPage - 1) + 1)} - {Math.min(filteredCustomers.length, ITEMS_PER_PAGE * currentPage)} of {filteredCustomers.length}
+          </p>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0 border-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1 px-4 bg-muted/20 rounded-lg border-2">
+              <span className="text-[10px] font-black uppercase">{currentPage}</span>
+              <span className="text-[10px] font-bold text-muted-foreground">/</span>
+              <span className="text-[10px] font-black text-muted-foreground">{totalPages}</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0 border-2"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
