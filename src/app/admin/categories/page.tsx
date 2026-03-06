@@ -57,7 +57,7 @@ export default function AdminCategories() {
     try {
       const defaults = [
         { name: "Sneakers", slug: "sneakers", imageUrl: "https://images.unsplash.com/photo-1626379616459-b2ce1d9decbc?q=80&w=1000" },
-        { name: "Boots", slug: "boots", imageUrl: "https://images.unsplash.com/photo-1638158980051-f7e67291efed?q=80&w=1000" },
+        { name: "Boots", slug: "boots", imageUrl: "https://images.unsplash.com/photo-1605733513597-a8f8d410fe3c?q=80&w=1000" },
         { name: "Casual", slug: "casual", imageUrl: "https://images.unsplash.com/photo-1594470086007-3b6962502bae?q=80&w=1000" },
         { name: "Official", slug: "official", imageUrl: "https://images.unsplash.com/photo-1657036779347-db31ebaad251?q=80&w=1000" },
       ];
