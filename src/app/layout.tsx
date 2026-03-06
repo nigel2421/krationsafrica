@@ -5,6 +5,7 @@ import { WishlistProvider } from "@/hooks/use-wishlist";
 import { Navbar } from "@/components/navbar";
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { SecurityDeterrent } from "@/components/security-deterrent";
 
 export const metadata: Metadata = {
   title: "Kreations Kicks - Ultra Modern Shoe Store",
@@ -37,6 +38,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className="font-body antialiased bg-background text-foreground selection:bg-secondary selection:text-secondary-foreground">
+        <SecurityDeterrent />
         <FirebaseClientProvider>
           <WishlistProvider>
             <CartProvider>
