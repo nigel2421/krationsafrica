@@ -27,7 +27,7 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // Anyone can browse products and categories
+    // Anyone can browse products and categories (Public Access)
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -38,12 +38,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Anyone can create an order (e-commerce guest checkout), but only admins can manage them
+    // Anyone can create an order, but only admins can manage them
     match /orders/{orderId} {
       allow read, update, delete: if isAdmin();
       allow create: if true;
     }
 
+    // Anyone can read media (public images), only admins can write
     match /media/{mediaId} {
       allow read: if true;
       allow write: if isAdmin();
