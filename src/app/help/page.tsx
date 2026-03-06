@@ -54,7 +54,7 @@ export default function HelpCenter() {
           <h3 className="text-xl font-black uppercase mb-2 text-foreground">Still have questions?</h3>
           <p className="text-muted-foreground mb-6 font-medium">Our team is available to help you personally via WhatsApp.</p>
           <Button asChild className="bg-[#25D366] hover:bg-[#128C7E] text-white font-black uppercase px-8 h-12">
-            <a href="https://wa.me/254712345678" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/254719112025" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 h-5 w-5" /> Chat with us
             </a>
           </Button>

@@ -22,7 +22,6 @@ import {
   UserCheck,
   Copy,
   CheckCircle2,
-  ShieldCheck,
   Info
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
@@ -123,7 +122,7 @@ export function CartSidebar() {
         location: details.location
       }));
 
-      const storeNumber = "254712345678";
+      const storeNumber = "254719112025";
       const orderId = generateOrderId();
       const zoneLabel = deliveryMethod === "delivery" 
         ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.label || "Delivery") 
@@ -215,7 +214,7 @@ export function CartSidebar() {
   );
 
   const NavigationButtons = () => (
-    <div className="flex gap-2 mt-8">
+    <div className="flex gap-2 mt-8 pb-10">
       {checkoutStep > 1 && !isSubmitting && (
         <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep(prev => prev - 1)}>
           <ChevronLeft className="h-6 w-6" />
@@ -251,7 +250,7 @@ export function CartSidebar() {
           <CheckCircle2 className="h-16 w-16 text-green-500" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-3xl font-black uppercase tracking-tighter">Order Placed!</h2>
+          <h2 className="text-3xl font-black uppercase tracking-tighter">Order Placed Successfully!</h2>
           <p className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Redirecting to WhatsApp...</p>
         </div>
         <p className="text-sm font-medium leading-relaxed">
@@ -375,7 +374,7 @@ export function CartSidebar() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
-                  <Input placeholder="0712345678" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                  <Input placeholder="0719112025" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
                 </div>
                 {deliveryMethod === "delivery" && (
                   <div className="space-y-1.5">

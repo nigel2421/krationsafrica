@@ -28,7 +28,7 @@ export default function ContactUs() {
                 </div>
                 <div>
                   <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Call / WhatsApp</p>
-                  <p className="font-black text-black">+254 712 345 678</p>
+                  <p className="font-black text-black">+254 719 112025</p>
                 </div>
               </div>
               <div className="flex gap-4 items-center p-4 border-2 rounded-xl bg-white">
@@ -78,7 +78,7 @@ export default function ContactUs() {
               </div>
             </div>
             <Button asChild className="w-full h-14 bg-secondary text-primary font-black uppercase text-lg hover:bg-white transition-colors">
-              <a href="https://wa.me/254712345678" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/254719112025" target="_blank" rel="noopener noreferrer">
                 Message Support Now
               </a>
             </Button>
