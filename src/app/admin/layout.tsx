@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -19,7 +18,8 @@ import {
   WifiOff,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -71,6 +71,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: "Inventory", href: "/admin/products", icon: Package },
     { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
     { label: "Categories", href: "/admin/categories", icon: Layers },
+    { label: "Media", href: "/admin/media", icon: ImageIcon },
     { label: "Customers", href: "/admin/customers", icon: Users },
   ];
 
