@@ -16,7 +16,10 @@ import {
   Store,
   Truck,
   ShieldAlert,
-  MapPinned
+  MapPinned,
+  CreditCard,
+  Building2,
+  UserCheck
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -60,27 +63,10 @@ export function CartSidebar() {
 
   const normalizePhone = (phone: string) => {
     let cleaned = phone.trim().replace(/\s+/g, '').replace(/-/g, '');
-    
-    // If it already has a plus, trust it
-    if (cleaned.startsWith('+')) {
-      return cleaned;
-    }
-    
-    // Check for regional country codes (Kenya 254, Uganda 256, Tanzania 255)
-    if (cleaned.startsWith('254') || cleaned.startsWith('256') || cleaned.startsWith('255')) {
-      return '+' + cleaned;
-    }
-    
-    // Default to Kenya if it starts with 0
-    if (cleaned.startsWith('0')) {
-      return '+254' + cleaned.substring(1);
-    }
-    
-    // If no prefix and no 0, we can't be sure, but let's assume Kenya for digits only
-    if (/^\d+$/.test(cleaned)) {
-      return '+254' + cleaned;
-    }
-
+    if (cleaned.startsWith('+')) return cleaned;
+    if (cleaned.startsWith('254') || cleaned.startsWith('256') || cleaned.startsWith('255')) return '+' + cleaned;
+    if (cleaned.startsWith('0')) return '+254' + cleaned.substring(1);
+    if (/^\d+$/.test(cleaned)) return '+254' + cleaned;
     return cleaned;
   };
 
@@ -89,7 +75,7 @@ export function CartSidebar() {
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const day = now.getDate().toString().padStart(2, '0');
     const random = Math.floor(1000 + Math.random() * 9000);
-    return `ORD-${month}${day}-${random}`;
+    return `K254-${month}${day}-${random}`;
   };
 
   const handleWhatsAppCheckout = async () => {
@@ -126,34 +112,34 @@ export function CartSidebar() {
       if (db) {
         const globalOrderRef = doc(db, "orders", orderId);
         await setDoc(globalOrderRef, orderData);
-        
         if (user) {
           const userOrderRef = doc(db, "userProfiles", user.uid, "orders", orderId);
           await setDoc(userOrderRef, orderData);
         }
       }
 
-      const message = `*New Order from Kreations Kicks*\n\n` +
+      const message = `*NEW ORDER - KREATIONS 254*\n\n` +
         `*Order ID:* ${orderId}\n\n` +
-        `*Customer Details:*\n` +
-        `Name: ${details.name}\n` +
-        `Phone: ${normalizedCustomerPhone}\n` +
-        `Method: ${deliveryMethod === "delivery" ? "Delivery" : "Pick-up"}\n` +
-        `${deliveryMethod === "delivery" ? `Location: ${details.location}\nRegion: ${zoneLabel}\n` : "Location: Royal Palms Mall, Shop BF01, Ronald Ngala St\n"}` +
-        `${details.notes ? `Notes: ${details.notes}\n` : ""}\n` +
-        `*Order Summary:*\n` +
+        `*Customer:* ${details.name}\n` +
+        `*Phone:* ${normalizedCustomerPhone}\n` +
+        `*Method:* ${deliveryMethod === "delivery" ? "Delivery" : "Pick-up"}\n` +
+        `${deliveryMethod === "delivery" ? `*Location:* ${details.location}\n*Region:* ${zoneLabel}\n` : "*Location:* Royal Palms Mall, Shop BF01, Nairobi CBD\n"}` +
+        `${details.notes ? `*Notes:* ${details.notes}\n` : ""}\n` +
+        `*Items Ordered:*\n` +
         `${itemsList}\n\n` +
-        `*Subtotal:* KES ${totalPrice.toLocaleString()}\n` +
-        `*Delivery:* KES ${deliveryFee.toLocaleString()}\n` +
-        `*Grand Total: KES ${grandTotal.toLocaleString()}*\n\n` +
-        `⚠️ *IMPORTANT PAYMENT DISCLAIMER*\n` +
-        `To secure your order and begin processing, kindly make your payment to *+254 712 345 678*.\n\n` +
-        `*Note:* Orders are only dispatched once payment is confirmed. After payment, simply reply here with your M-Pesa confirmation code or a screenshot. 👇`;
+        `*Total Amount:* KES ${grandTotal.toLocaleString()}\n\n` +
+        `⚠️ *PAYMENT INSTRUCTIONS*\n` +
+        `To secure your order, please pay to:\n` +
+        `*LIPA NA FAMILY (M-Pesa Paybill)*\n` +
+        `*Business Number:* 222111\n` +
+        `*Account Number:* 172754\n` +
+        `*Name:* VINCENT KITONGA\n\n` +
+        `Please share the confirmation code or screenshot below once paid. IT WILL ALWAYS LOOK GOOD ON YOU!`;
 
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/${storeNumber}?text=${encodedMessage}`, "_blank");
       clearCart();
-      toast({ title: "Order Placed!", description: "WhatsApp is opening for confirmation." });
+      toast({ title: "Order Initiated", description: "WhatsApp is opening with your payment details." });
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
@@ -161,39 +147,27 @@ export function CartSidebar() {
     }
   };
 
-  if (cart.length === 0) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-background">
-        <div className="mb-4 rounded-full bg-muted p-6">
-          <ShoppingCart className="h-12 w-12 text-muted-foreground" />
-        </div>
-        <h2 className="text-xl font-black uppercase tracking-tighter text-foreground">Cart is empty</h2>
-        <p className="mt-2 text-muted-foreground font-medium">Ready to find your next pair?</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-full flex-col bg-background text-foreground overflow-hidden">
       <ScrollArea className="flex-1 p-4 md:p-6 pb-32">
         {checkoutStep === 1 && (
           <div className="space-y-6">
-            <h3 className="font-black text-lg uppercase tracking-tight text-foreground">Review Items</h3>
+            <h3 className="font-black text-lg uppercase tracking-tight">Review Items</h3>
             {cart.map((item) => (
               <div key={item.id} className="flex gap-4 group">
-                <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors">
+                <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors shrink-0">
                   <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
                 </div>
                 <div className="flex flex-1 flex-col justify-between py-1">
                   <div>
-                    <h3 className="font-black text-[11px] uppercase tracking-tight leading-none mb-1 text-foreground">{item.name}</h3>
+                    <h3 className="font-black text-[11px] uppercase tracking-tight leading-none mb-1">{item.name}</h3>
                     <p className="text-sm font-black text-secondary">KES {item.price.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 border-2 rounded-md p-1 border-muted">
-                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 hover:text-secondary text-foreground"><Minus className="h-3 w-3" /></button>
-                      <span className="text-xs font-black w-4 text-center text-foreground">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 hover:text-secondary text-foreground"><Plus className="h-3 w-3" /></button>
+                      <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 hover:text-secondary"><Minus className="h-3 w-3" /></button>
+                      <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 hover:text-secondary"><Plus className="h-3 w-3" /></button>
                     </div>
                     <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
                   </div>
@@ -205,7 +179,7 @@ export function CartSidebar() {
 
         {checkoutStep === 2 && (
           <div className="space-y-6">
-            <h3 className="font-black text-lg uppercase tracking-tight text-foreground">How do you want it?</h3>
+            <h3 className="font-black text-lg uppercase tracking-tight">Delivery Method</h3>
             <RadioGroup value={deliveryMethod} onValueChange={(v: any) => setDeliveryMethod(v)} className="grid grid-cols-2 gap-4">
               <Label className={`flex flex-col items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all gap-2 text-center ${deliveryMethod === "delivery" ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"}`}>
                 <RadioGroupItem value="delivery" className="sr-only" />
@@ -234,7 +208,7 @@ export function CartSidebar() {
                       <div className="flex items-center gap-3">
                         <RadioGroupItem value={zone.id} id={zone.id} />
                         <div className="space-y-1">
-                          <p className="font-black text-[10px] uppercase text-foreground">{zone.label}</p>
+                          <p className="font-black text-[10px] uppercase">{zone.label}</p>
                           <p className="text-[9px] text-muted-foreground leading-none">{zone.description}</p>
                         </div>
                       </div>
@@ -248,12 +222,12 @@ export function CartSidebar() {
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-secondary shrink-0" />
                   <div>
-                    <p className="font-black text-xs uppercase text-foreground">Royal Palms Mall, Shop BF01</p>
+                    <p className="font-black text-xs uppercase">Royal Palms Mall, Shop BF01</p>
                     <p className="text-[10px] text-muted-foreground mt-1">Ronald Ngala Street, Nairobi CBD. Open Mon-Sat, 9 AM - 7 PM.</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" className="w-full font-bold text-[10px] uppercase border-secondary text-secondary" asChild>
-                  <a href="https://www.google.com/maps/search/?api=1&query=Royal+Palms+Mall+Ronald+Ngala+Street+Nairobi+Shop+BF01" target="_blank"><MapPinned className="mr-2 h-3 w-3" /> View on Google Maps</a>
+                  <a href="https://www.google.com/maps/search/?api=1&query=Royal+Palms+Mall+Ronald+Ngala+Street+Nairobi+Shop+BF01" target="_blank"><MapPinned className="mr-2 h-3 w-3" /> View on Maps</a>
                 </Button>
               </div>
             )}
@@ -262,75 +236,103 @@ export function CartSidebar() {
 
         {checkoutStep === 3 && (
           <div className="space-y-6">
-            <h3 className="font-black text-lg uppercase tracking-tight text-foreground">Your Details</h3>
+            <h3 className="font-black text-lg uppercase tracking-tight">Personal Details</h3>
             <div className="grid gap-4">
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                <Input placeholder="e.g. John Doe" className="border-2 h-12 bg-background text-foreground" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
+                <Input placeholder="John Doe" className="border-2 h-12 bg-background" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
-                <Input placeholder="e.g. 0712345678 or +256..." className="border-2 h-12 bg-background text-foreground" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
-                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Include country code for regional orders (+256, +255)</p>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">WhatsApp Number</Label>
+                <Input placeholder="0712345678" className="border-2 h-12 bg-background" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider">Ensure this is an active WhatsApp line for updates.</p>
               </div>
               {deliveryMethod === "delivery" && (
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Exact Delivery Location</Label>
-                  <Input placeholder="Estate, Apt Name, Floor/Door No." className="border-2 h-12 bg-background text-foreground" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Exact Location</Label>
+                  <Input placeholder="Estate, Apt, Floor, Door No." className="border-2 h-12 bg-background" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Special Request / Notes</Label>
-                <Textarea placeholder="Any specific instructions?" className="border-2 bg-background text-foreground" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Additional Notes</Label>
+                <Textarea placeholder="Any specific instructions?" className="border-2 bg-background" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
               </div>
             </div>
           </div>
         )}
 
         {checkoutStep === 4 && (
-          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
             <div className="text-center space-y-4">
               <div className="bg-secondary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto border-2 border-secondary/20">
                 <ShieldAlert className="h-10 w-10 text-secondary" />
               </div>
-              <h3 className="font-black text-2xl uppercase tracking-tighter text-foreground">Almost Ready!</h3>
-              <p className="text-muted-foreground text-sm font-medium">Please review our payment policy to finalize your purchase.</p>
+              <h3 className="font-black text-2xl uppercase tracking-tighter">Payment Required</h3>
+              <p className="text-muted-foreground text-sm font-medium">To secure your order, please complete the payment below.</p>
             </div>
 
-            <div className="bg-[#2A2A40] text-white p-6 rounded-2xl space-y-6 shadow-xl border-t-4 border-secondary">
-              <div className="space-y-2">
-                <h4 className="text-secondary font-black text-xs uppercase tracking-[0.2em]">Important Disclaimer</h4>
-                <p className="text-sm font-bold leading-relaxed">
-                  To secure your pair and start processing, payment must be made to:
-                </p>
-                <div className="bg-white/10 p-4 rounded-lg flex items-center justify-between">
-                  <span className="font-black text-lg">+254 712 345 678</span>
-                  <span className="text-[10px] font-black uppercase bg-secondary text-primary px-2 py-1 rounded">M-PESA</span>
+            <div className="bg-[#1E40AF] text-white p-1 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="bg-[#2563EB] p-8 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-6 w-6 text-secondary" />
+                    <span className="font-black text-sm uppercase tracking-widest">LIPA NA FAMILY</span>
+                  </div>
+                  <div className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-black uppercase">M-PESA</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/10 p-4 rounded-2xl space-y-1">
+                    <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">Business No</p>
+                    <p className="text-2xl font-black tracking-tight">222 111</p>
+                  </div>
+                  <div className="bg-white/10 p-4 rounded-2xl space-y-1">
+                    <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">Account No</p>
+                    <p className="text-2xl font-black tracking-tight">172 754</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/10 p-4 rounded-2xl flex items-center gap-4">
+                  <UserCheck className="h-6 w-6 text-secondary" />
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-black text-white/50 uppercase tracking-widest">Business Name</p>
+                    <p className="text-sm font-black uppercase">VINCENT KITONGA</p>
+                  </div>
                 </div>
               </div>
+              <div className="p-4 text-center bg-primary/20 backdrop-blur-sm">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Powered by Family Bank</p>
+              </div>
+            </div>
 
-              <Separator className="bg-white/10" />
-
-              <ul className="space-y-3 text-xs font-medium text-white/80">
-                <li className="flex items-start gap-2">
-                  <div className="h-4 w-4 rounded-full bg-secondary text-primary flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">1</div>
-                  <span>Orders are only dispatched once payment is confirmed.</span>
+            <div className="bg-muted/30 p-6 rounded-2xl space-y-4 border-2 border-dashed">
+              <h4 className="font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                <CreditCard className="h-4 w-4" /> Next Steps
+              </h4>
+              <ul className="space-y-3 text-xs font-medium text-muted-foreground">
+                <li className="flex gap-3">
+                  <span className="h-5 w-5 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[10px] font-black shrink-0">1</span>
+                  <span>Make payment using the Paybill details above.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <div className="h-4 w-4 rounded-full bg-secondary text-primary flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">2</div>
-                  <span>Reply with your M-Pesa code or screenshot on WhatsApp.</span>
+                <li className="flex gap-3">
+                  <span className="h-5 w-5 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[10px] font-black shrink-0">2</span>
+                  <span>Click "Open WhatsApp" below to share your details.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="h-5 w-5 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-[10px] font-black shrink-0">3</span>
+                  <span>Reply on WhatsApp with your M-Pesa confirmation.</span>
                 </li>
               </ul>
             </div>
-
-            <div className="text-center space-y-2 pb-10">
-              <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">IT WILL ALWAYS LOOK GOOD ON YOU</p>
+            
+            <div className="pb-10 text-center">
+               <p className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.5em]">ALWAYS LOOK GOOD ON YOU</p>
             </div>
           </div>
         )}
       </ScrollArea>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-10">
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-10 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)]">
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between text-[10px] font-black uppercase text-muted-foreground tracking-widest">
             <span>Subtotal</span>
@@ -343,7 +345,7 @@ export function CartSidebar() {
             </div>
           )}
           <div className="flex items-center justify-between pt-2 border-t-2 border-muted">
-            <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Total Payable</span>
+            <span className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Grand Total</span>
             <span className="text-2xl font-black text-primary dark:text-secondary">KES {grandTotal.toLocaleString()}</span>
           </div>
         </div>
@@ -351,7 +353,7 @@ export function CartSidebar() {
         <div className="flex gap-2">
           {checkoutStep > 1 && (
             <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep(prev => prev - 1)}>
-              <ChevronLeft className="h-6 w-6 text-foreground" />
+              <ChevronLeft className="h-6 w-6" />
             </Button>
           )}
           
@@ -359,7 +361,7 @@ export function CartSidebar() {
             <Button 
               onClick={() => setCheckoutStep(prev => prev + 1)} 
               disabled={(checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
-              className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary"
             >
               Continue <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
