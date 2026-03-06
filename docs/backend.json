@@ -49,7 +49,18 @@
         "items": { "type": "array", "items": { "type": "string" } },
         "totalAmount": { "type": "number" },
         "orderStatus": { "type": "string", "enum": ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"] },
-        "orderedAt": { "type": "string", "format": "date-time" }
+        "orderedAt": { "type": "string", "format": "date-time" },
+        "statusHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" },
+              "note": { "type": "string" }
+            }
+          }
+        }
       },
       "required": ["id", "customerName", "customerPhoneNumber", "deliveryLocation", "items", "totalAmount", "orderStatus", "orderedAt"]
     },

@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, arrayUnion } from "firebase/firestore";
 import { 
   ArrowLeft, 
   Printer, 
@@ -16,13 +16,18 @@ import {
   CreditCard,
   Package,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  History,
+  Clock,
+  CircleDot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
@@ -30,6 +35,7 @@ export default function OrderDetailsPage() {
   const db = useFirestore();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
 
   const orderRef = useMemoFirebase(() => {
     if (!db || !orderId) return null;
@@ -42,7 +48,15 @@ export default function OrderDetailsPage() {
     if (!orderRef) return;
     setIsUpdating(true);
     try {
-      await updateDoc(orderRef, { orderStatus: status, updatedAt: serverTimestamp() });
+      await updateDoc(orderRef, { 
+        orderStatus: status, 
+        updatedAt: serverTimestamp(),
+        statusHistory: arrayUnion({
+          status,
+          timestamp: new Date(),
+          note: `Status updated to ${status} via Admin Console`
+        })
+      });
       toast({ title: "Order Updated", description: `Status changed to ${status}` });
     } catch (e: any) {
       toast({ title: "Update Failed", variant: "destructive" });
@@ -54,7 +68,6 @@ export default function OrderDetailsPage() {
   const generateWhatsAppLink = () => {
     if (!order) return "#";
     const status = order.orderStatus || "Pending";
-    // For WhatsApp links, we need the digits only, starting with country code.
     const cleanPhone = order.customerPhoneNumber.replace(/\D/g, '');
     const message = `Hi ${order.customerName},\n\nThis is Kreations 254. We are updating you on your order *#${order.id}*.\n\n*Current Status:* ${status.toUpperCase()}\n\nThank you for choosing us! IT WILL ALWAYS LOOK GOOD ON YOU.`;
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
@@ -142,6 +155,8 @@ export default function OrderDetailsPage() {
 
   if (!order) return <div className="text-center py-20 font-black uppercase text-destructive tracking-widest">Order Entry Not Found</div>;
 
+  const history = order.statusHistory || [];
+
   return (
     <div className="space-y-8 pb-32 max-w-4xl mx-auto">
       {isUpdating && (
@@ -154,9 +169,14 @@ export default function OrderDetailsPage() {
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="font-black uppercase text-[10px] tracking-widest gap-2 bg-card text-foreground shadow-sm h-10 px-6 rounded-xl border border-muted">
-          <ArrowLeft className="h-4 w-4" /> Back to Desk
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="ghost" size="sm" onClick={() => router.back()} className="font-black uppercase text-[10px] tracking-widest gap-2 bg-card text-foreground shadow-sm h-10 px-6 rounded-xl border border-muted">
+            <ArrowLeft className="h-4 w-4" /> Back to Desk
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setTimelineOpen(true)} className="font-black uppercase text-[10px] tracking-widest gap-2 bg-secondary/10 text-secondary border-secondary/20 h-10 px-6 rounded-xl">
+            <History className="h-4 w-4" /> View Timeline
+          </Button>
+        </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button variant="outline" className="flex-1 sm:flex-none font-black text-[10px] uppercase border-2 h-10 px-6 rounded-xl gap-2 bg-card text-foreground" onClick={handlePrint}>
             <Printer className="h-4 w-4" /> Print Receipt
@@ -317,6 +337,76 @@ export default function OrderDetailsPage() {
            </div>
         </aside>
       </div>
+
+      {/* Timeline Dialog */}
+      <Dialog open={timelineOpen} onOpenChange={setTimelineOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">Order Lifecycle</DialogTitle>
+            <DialogDescription className="font-bold text-[10px] uppercase text-muted-foreground">Tracking ID: {order.id}</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-8 py-4 relative">
+              {/* Vertical Line */}
+              <div className="absolute left-2.5 top-6 bottom-6 w-0.5 bg-muted" />
+
+              {/* Initial Event: Order Placed */}
+              <div className="relative pl-10">
+                <div className="absolute left-0 top-1 h-5 w-5 rounded-full bg-secondary border-4 border-white shadow-sm flex items-center justify-center z-10" />
+                <div className="space-y-1">
+                  <p className="font-black text-sm uppercase">Order Placed</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {order.orderedAt?.seconds ? new Date(order.orderedAt.seconds * 1000).toLocaleString('en-KE') : 'Initial Entry'}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-medium">Customer initiated the order through the digital storefront.</p>
+                </div>
+              </div>
+
+              {/* Historical Updates */}
+              {history.map((entry: any, idx: number) => {
+                const date = entry.timestamp?.seconds 
+                  ? new Date(entry.timestamp.seconds * 1000).toLocaleString('en-KE')
+                  : new Date(entry.timestamp).toLocaleString('en-KE');
+
+                return (
+                  <div key={idx} className="relative pl-10 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <div className="absolute left-0 top-1 h-5 w-5 rounded-full bg-primary border-4 border-white shadow-sm flex items-center justify-center z-10" />
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-black text-sm uppercase">{entry.status}</p>
+                        <Badge variant="secondary" className="text-[8px] h-4 uppercase font-black">Admin Update</Badge>
+                      </div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {date}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-medium">{entry.note}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Current Status Highlight if not covered by history yet */}
+              {history.length === 0 && order.orderStatus !== "Pending" && (
+                <div className="relative pl-10 italic">
+                  <div className="absolute left-0 top-1 h-5 w-5 rounded-full bg-primary border-4 border-white shadow-sm z-10" />
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Syncing current status details...</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="pt-4 border-t-2">
+             <div className="bg-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center gap-3">
+                <CircleDot className="h-5 w-5 text-secondary animate-pulse" />
+                <div>
+                   <p className="text-[10px] font-black uppercase text-secondary">Active Lifecycle</p>
+                   <p className="text-[11px] font-bold text-foreground uppercase tracking-tight">Current State: {order.orderStatus}</p>
+                </div>
+             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
