@@ -27,7 +27,7 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // Anyone can browse products and categories (Public Access)
+    // Public access for products and categories (Browsing)
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -38,31 +38,32 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Anyone can create an order, but only admins can manage them
+    // Orders: Anyone can create (checkout), but only admins manage the master list
     match /orders/{orderId} {
-      allow read, update, delete: if isAdmin();
       allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
 
-    // Anyone can read media (public images), only admins can write
+    // Media: Publicly readable images, admin-only writes
     match /media/{mediaId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    // User Profiles: Private by default, accessible by owner or admin
     match /userProfiles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId);
-      allow update: if (isOwner(userId) || isAdmin());
+      allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
-    }
 
-    match /userProfiles/{userId}/orders/{orderId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      // Individual user order history
+      match /orders/{orderId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
+        allow update, delete: if isAdmin();
+      }
     }
   }
 }
