@@ -22,7 +22,8 @@ import {
   UserCheck,
   Copy,
   CheckCircle2,
-  Info
+  Info,
+  Mail
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ export function CartSidebar() {
   
   const [details, setDetails] = useState({
     name: "",
+    email: "",
     phone: "",
     location: "",
     notes: "",
@@ -72,6 +74,7 @@ export function CartSidebar() {
         setDetails(prev => ({
           ...prev,
           name: parsed.name || "",
+          email: parsed.email || "",
           phone: parsed.phone || "",
           location: parsed.location || ""
         }));
@@ -118,6 +121,7 @@ export function CartSidebar() {
     try {
       localStorage.setItem("kicks_customer_details", JSON.stringify({
         name: details.name,
+        email: details.email,
         phone: details.phone,
         location: details.location
       }));
@@ -137,6 +141,7 @@ export function CartSidebar() {
       const orderData = {
         id: orderId,
         customerName: details.name,
+        customerEmail: details.email.toLowerCase().trim(),
         customerPhoneNumber: normalizedCustomerPhone,
         deliveryLocation: deliveryMethod === "delivery" ? details.location : "Royal Palms Mall, Shop BF01",
         deliveryRegion: zoneLabel,
@@ -151,11 +156,24 @@ export function CartSidebar() {
       };
 
       if (db) {
+        // Create Order
         const globalOrderRef = doc(db, "orders", orderId);
         await setDoc(globalOrderRef, orderData);
         if (user) {
           const userOrderRef = doc(db, "userProfiles", user.uid, "orders", orderId);
           await setDoc(userOrderRef, orderData);
+        }
+
+        // Add to mailing list (Newsletter Subscriptions)
+        if (details.email) {
+          const subscriptionRef = doc(db, "newsletterSubscriptions", details.email.toLowerCase().trim());
+          await setDoc(subscriptionRef, {
+            email: details.email.toLowerCase().trim(),
+            name: details.name,
+            phone: normalizedCustomerPhone,
+            source: 'checkout',
+            subscribedAt: serverTimestamp(),
+          }, { merge: true });
         }
       }
 
@@ -224,7 +242,7 @@ export function CartSidebar() {
       {checkoutStep < 4 ? (
         <Button 
           onClick={() => setCheckoutStep(prev => prev + 1)} 
-          disabled={cart.length === 0 || (checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
+          disabled={cart.length === 0 || (checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.email || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
           className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary"
         >
           Continue <ChevronRight className="ml-2 h-5 w-5" />
@@ -374,6 +392,13 @@ export function CartSidebar() {
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
                   <Input placeholder="John Doe" className="border-2 h-12 bg-background focus:ring-secondary" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                    <Input type="email" placeholder="john@example.com" className="pl-10 border-2 h-12 bg-background focus:ring-secondary" value={details.email} onChange={(e) => setDetails({ ...details, email: e.target.value })} />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>

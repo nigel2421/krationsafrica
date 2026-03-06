@@ -43,6 +43,7 @@
         "id": { "type": "string" },
         "userId": { "type": "string" },
         "customerName": { "type": "string" },
+        "customerEmail": { "type": "string", "format": "email" },
         "customerPhoneNumber": { "type": "string" },
         "deliveryLocation": { "type": "string" },
         "items": { "type": "array", "items": { "type": "string" } },
@@ -68,6 +69,9 @@
       "type": "object",
       "properties": {
         "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "source": { "type": "string", "enum": ["direct", "checkout"] },
         "subscribedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email", "subscribedAt"]
