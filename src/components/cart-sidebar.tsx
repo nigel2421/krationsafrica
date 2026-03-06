@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -57,6 +58,20 @@ export function CartSidebar() {
   const deliveryFee = deliveryMethod === "delivery" ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.fee || 0) : 0;
   const grandTotal = totalPrice + deliveryFee;
 
+  const normalizePhone = (phone: string) => {
+    let cleaned = phone.trim().replace(/\s+/g, '');
+    if (cleaned.startsWith('0')) {
+      return '+254' + cleaned.substring(1);
+    }
+    if (cleaned.startsWith('254')) {
+      return '+' + cleaned;
+    }
+    if (cleaned.startsWith('+254')) {
+      return cleaned;
+    }
+    return '+254' + cleaned;
+  };
+
   const generateOrderId = () => {
     const now = new Date();
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -68,11 +83,13 @@ export function CartSidebar() {
   const handleWhatsAppCheckout = async () => {
     setIsSubmitting(true);
     try {
-      const storeNumber = "254719112025";
+      const storeNumber = "254712345678";
       const orderId = generateOrderId();
       const zoneLabel = deliveryMethod === "delivery" 
         ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.label || "Delivery") 
         : "Store Pick-up (Royal Palms Mall)";
+      
+      const normalizedCustomerPhone = normalizePhone(details.phone);
       
       const itemsList = cart
         .map((item) => `• ${item.name} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
@@ -81,7 +98,7 @@ export function CartSidebar() {
       const orderData = {
         id: orderId,
         customerName: details.name,
-        customerPhoneNumber: details.phone,
+        customerPhoneNumber: normalizedCustomerPhone,
         deliveryLocation: deliveryMethod === "delivery" ? details.location : "Royal Palms Mall, Shop BF01",
         deliveryRegion: zoneLabel,
         deliveryFee: deliveryFee,
@@ -108,7 +125,7 @@ export function CartSidebar() {
         `*Order ID:* ${orderId}\n\n` +
         `*Customer Details:*\n` +
         `Name: ${details.name}\n` +
-        `Phone: ${details.phone}\n` +
+        `Phone: ${normalizedCustomerPhone}\n` +
         `Method: ${deliveryMethod === "delivery" ? "Delivery" : "Pick-up"}\n` +
         `${deliveryMethod === "delivery" ? `Location: ${details.location}\nRegion: ${zoneLabel}\n` : "Location: Royal Palms Mall, Shop BF01, Ronald Ngala St\n"}` +
         `${details.notes ? `Notes: ${details.notes}\n` : ""}\n` +
@@ -118,7 +135,7 @@ export function CartSidebar() {
         `*Delivery:* KES ${deliveryFee.toLocaleString()}\n` +
         `*Grand Total: KES ${grandTotal.toLocaleString()}*\n\n` +
         `⚠️ *IMPORTANT PAYMENT DISCLAIMER*\n` +
-        `To secure your order and begin processing, kindly make your payment to *+254 719 112025*.\n\n` +
+        `To secure your order and begin processing, kindly make your payment to *+254 712 345 678*.\n\n` +
         `*Note:* Orders are only dispatched once payment is confirmed. After payment, simply reply here with your M-Pesa confirmation code or a screenshot. 👇`;
 
       const encodedMessage = encodeURIComponent(message);
@@ -237,11 +254,11 @@ export function CartSidebar() {
             <div className="grid gap-4">
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                <Input placeholder="e.g. Nigel Andahua" className="border-2 h-12 bg-background text-foreground" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
+                <Input placeholder="e.g. John Doe" className="border-2 h-12 bg-background text-foreground" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
-                <Input placeholder="0719 112 025" className="border-2 h-12 bg-background text-foreground" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                <Input placeholder="0712345678" className="border-2 h-12 bg-background text-foreground" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
               </div>
               {deliveryMethod === "delivery" && (
                 <div className="space-y-1.5">
@@ -274,7 +291,7 @@ export function CartSidebar() {
                   To secure your pair and start processing, payment must be made to:
                 </p>
                 <div className="bg-white/10 p-4 rounded-lg flex items-center justify-between">
-                  <span className="font-black text-lg">+254 719 112 025</span>
+                  <span className="font-black text-lg">+254 712 345 678</span>
                   <span className="text-[10px] font-black uppercase bg-secondary text-primary px-2 py-1 rounded">M-PESA</span>
                 </div>
               </div>

@@ -39,8 +39,8 @@ export default function HelpCenter() {
 
         <Accordion type="single" collapsible className="w-full space-y-4">
           {faqs.map((faq, i) => (
-            <AccordionItem key={i} value={`item-${i}`} className="border-2 rounded-xl px-6 bg-white shadow-sm">
-              <AccordionTrigger className="text-left font-black uppercase text-sm hover:no-underline py-6">
+            <AccordionItem key={i} value={`item-${i}`} className="border-2 rounded-xl px-6 bg-card shadow-sm">
+              <AccordionTrigger className="text-left font-black uppercase text-sm hover:no-underline py-6 text-foreground">
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground pb-6 font-medium leading-relaxed">
@@ -51,10 +51,10 @@ export default function HelpCenter() {
         </Accordion>
 
         <div className="mt-16 p-8 bg-secondary/10 rounded-2xl border-2 border-secondary/20 text-center">
-          <h3 className="text-xl font-black uppercase mb-2">Still have questions?</h3>
+          <h3 className="text-xl font-black uppercase mb-2 text-foreground">Still have questions?</h3>
           <p className="text-muted-foreground mb-6 font-medium">Our team is available to help you personally via WhatsApp.</p>
           <Button asChild className="bg-[#25D366] hover:bg-[#128C7E] text-white font-black uppercase px-8 h-12">
-            <a href="https://wa.me/254724211100" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/254712345678" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 h-5 w-5" /> Chat with us
             </a>
           </Button>

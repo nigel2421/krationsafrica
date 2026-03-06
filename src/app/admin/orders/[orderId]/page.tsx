@@ -54,8 +54,9 @@ export default function OrderDetailsPage() {
   const generateWhatsAppLink = () => {
     if (!order) return "#";
     const status = order.orderStatus || "Pending";
+    const cleanPhone = order.customerPhoneNumber.replace(/\D/g, '');
     const message = `Hi ${order.customerName},\n\nThis is Kreations 254. We are updating you on your order *#${order.id}*.\n\n*Current Status:* ${status.toUpperCase()}\n\nThank you for choosing us! IT WILL ALWAYS LOOK GOOD ON YOU.`;
-    return `https://wa.me/${order.customerPhoneNumber}?text=${encodeURIComponent(message)}`;
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
   };
 
   const handlePrint = () => {
@@ -122,7 +123,7 @@ export default function OrderDetailsPage() {
           <div style="clear: both;"></div>
           <div class="footer">
             <p style="font-weight: 900; letter-spacing: 5px;">IT WILL ALWAYS LOOK GOOD ON YOU</p>
-            <p>Customer Support: +254 719 112025</p>
+            <p>Customer Support: +254 712 345 678</p>
           </div>
           <script>window.print();</script>
         </body>

@@ -104,7 +104,7 @@ export default function CustomerOrders() {
 
           <div class="footer">
             <p>IT WILL ALWAYS LOOK GOOD ON YOU</p>
-            <p>Payment to: +254 719 112025</p>
+            <p>Payment to: +254 712 345 678</p>
           </div>
           <script>window.print();</script>
         </body>

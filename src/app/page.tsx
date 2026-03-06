@@ -246,7 +246,7 @@ export default function Home() {
                   <a href="https://instagram.com/kreations.254" target="_blank"><Instagram className="h-5 w-5" /></a>
                 </Button>
                 <Button size="icon" variant="outline" className="border-white/10 hover:bg-secondary hover:text-primary hover:border-secondary rounded-xl" asChild>
-                  <a href="https://wa.me/254719112025" target="_blank"><Zap className="h-5 w-5" /></a>
+                  <a href="https://wa.me/254712345678" target="_blank"><Zap className="h-5 w-5" /></a>
                 </Button>
               </div>
             </div>
