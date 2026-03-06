@@ -38,6 +38,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Newsletter: Public sign-up
+    match /newsletterSubscriptions/{email} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Orders: Anyone can create (checkout), but only admins manage the master list
     match /orders/{orderId} {
       allow create: if true;

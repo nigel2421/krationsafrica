@@ -4,20 +4,21 @@
 import React, { useState } from "react";
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package, Star, Mail, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { MediaLibrary } from "@/components/admin/media-library";
 import { generateProductDescription } from "@/ai/flows/admin-product-description-generator";
+import { generateNewsletterHtml } from "@/ai/flows/newsletter-generator";
 
 const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
 
@@ -29,6 +30,12 @@ export default function AdminInventory() {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // Newsletter Logic
+  const [newsletterOpen, setNewsletterOpen] = useState(false);
+  const [newsletterHtml, setNewsletterHtml] = useState("");
+  const [isGeneratingNewsletter, setIsGeneratingNewsletter] = useState(false);
+  const [activeProductForNewsletter, setActiveProductForNewsletter] = useState<any>(null);
+
   const [form, setForm] = useState({
     name: "",
     brand: "",
@@ -124,6 +131,32 @@ export default function AdminInventory() {
     }
   };
 
+  const handleNewsletterGenerate = async (product: any) => {
+    setActiveProductForNewsletter(product);
+    setNewsletterOpen(true);
+    setNewsletterHtml("");
+    setIsGeneratingNewsletter(true);
+    try {
+      const result = await generateNewsletterHtml({
+        shoeName: product.name,
+        imageUrl: product.imageUrl,
+        price: product.price,
+        offerPrice: product.onOffer ? product.offerPrice : undefined,
+        description: product.description,
+      });
+      setNewsletterHtml(result.html);
+    } catch (e: any) {
+      toast({ title: "Generation Failed", variant: "destructive" });
+    } finally {
+      setIsGeneratingNewsletter(false);
+    }
+  };
+
+  const copyNewsletterHtml = () => {
+    navigator.clipboard.writeText(newsletterHtml);
+    toast({ title: "HTML Copied", description: "You can now paste this into your email marketing platform." });
+  };
+
   return (
     <div className="space-y-6 pb-20 text-foreground">
        <div className="flex flex-col gap-2">
@@ -193,6 +226,7 @@ export default function AdminInventory() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" title="Generate Newsletter HTML" onClick={() => handleNewsletterGenerate(product)} className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"><Mail className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => { if(confirm("Delete?")) deleteDoc(doc(db, "products", product.id)); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
@@ -225,12 +259,9 @@ export default function AdminInventory() {
                     <p className="font-black text-xs text-secondary leading-none">KES {(product.onOffer ? product.offerPrice : product.price).toLocaleString()}</p>
                   </div>
                 </div>
-                <div className="flex gap-1 mt-1">
-                  <Badge variant="outline" className="text-[7px] font-black uppercase px-1 h-3.5 leading-none">{product.category}</Badge>
-                  <Badge className="text-[7px] font-black uppercase px-1 h-3.5 leading-none">{product.stockStatus}</Badge>
-                </div>
               </div>
               <div className="flex justify-end gap-2 mt-2">
+                <Button variant="ghost" size="sm" onClick={() => handleNewsletterGenerate(product)} className="h-7 text-[8px] font-black uppercase px-2 text-blue-500"><Mail className="h-3 w-3 mr-1" /> Newsletter</Button>
                 <Button variant="outline" size="sm" onClick={() => handleEdit(product)} className="h-7 text-[8px] font-black uppercase px-2">Edit</Button>
                 <Button variant="ghost" size="sm" className="h-7 text-[8px] font-black uppercase px-2 text-destructive" onClick={() => { if(confirm("Delete?")) deleteDoc(doc(db, "products", product.id)); }}>Del</Button>
               </div>
@@ -239,6 +270,7 @@ export default function AdminInventory() {
         ))}
       </div>
 
+      {/* Product Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -328,6 +360,35 @@ export default function AdminInventory() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Newsletter Generation Dialog */}
+      <Dialog open={newsletterOpen} onOpenChange={setNewsletterOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase">Email Campaign Draft</DialogTitle>
+            <DialogDescription className="font-bold uppercase text-[10px]">Generate a luxury newsletter for {activeProductForNewsletter?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            {isGeneratingNewsletter ? (
+              <div className="py-20 flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-12 w-12 animate-spin text-secondary" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Crafting premium HTML...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-muted p-4 rounded-xl border max-h-[400px] overflow-y-auto">
+                   <code className="text-[10px] font-mono whitespace-pre-wrap">{newsletterHtml}</code>
+                </div>
+                <div className="flex gap-2">
+                   <Button onClick={copyNewsletterHtml} className="flex-1 font-black uppercase tracking-widest h-12 bg-secondary text-primary">
+                     <Copy className="mr-2 h-5 w-5" /> Copy HTML Code
+                   </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

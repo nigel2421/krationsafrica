@@ -1,22 +1,29 @@
 
 "use client";
 
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Zap, ShieldCheck, Truck, ShoppingBag, Star, Mail, Instagram, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, Truck, ShoppingBag, Star, Mail, Instagram, ChevronDown, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ProductCard } from "@/components/product-card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { collection, query, orderBy, limit, setDoc, doc, serverTimestamp } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 const BRANDS = ["Nike", "Adidas", "Puma", "Reebok", "Timberland", "Vans", "Converse", "Jordan"];
 
 export default function Home() {
   const db = useFirestore();
+  const { toast } = useToast();
   const heroImage = PlaceHolderImages.find(i => i.id === 'hero-shoe')?.imageUrl || "";
+
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [hasSubscribed, setHasSubscribed] = useState(false);
 
   // Dynamic Categories from Firestore
   const categoriesQuery = useMemoFirebase(() => {
@@ -32,6 +39,33 @@ export default function Home() {
 
   const { data: categories, isLoading: categoriesLoading } = useCollection(categoriesQuery);
   const { data: featuredProducts, isLoading: productsLoading } = useCollection(productsQuery);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail || !db) return;
+
+    setIsSubscribing(true);
+    try {
+      await setDoc(doc(db, "newsletterSubscriptions", newsletterEmail.toLowerCase()), {
+        email: newsletterEmail.toLowerCase(),
+        subscribedAt: serverTimestamp(),
+      });
+      setHasSubscribed(true);
+      toast({
+        title: "Welcome to the Inner Circle",
+        description: "You've successfully subscribed to our drop alerts.",
+      });
+      setNewsletterEmail("");
+    } catch (error: any) {
+      toast({
+        title: "Subscription Failed",
+        description: "We couldn't process your request. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   return (
     <main className="min-h-screen">
@@ -230,10 +264,35 @@ export default function Home() {
             <Mail className="h-12 w-12 mx-auto mb-6 text-[#2A2A40]" />
             <h2 className="text-5xl font-black text-[#2A2A40] tracking-tighter uppercase mb-4">THE INNER CIRCLE</h2>
             <p className="text-[#2A2A40]/70 font-black mb-10 text-sm uppercase tracking-[0.2em]">GET DROP ALERTS & EXCLUSIVE ACCESS.</p>
-            <div className="flex gap-2 p-2 bg-white rounded-none shadow-2xl">
-              <Input placeholder="EMAIL ADDRESS" className="bg-transparent border-none text-[#2A2A40] font-black placeholder:text-[#2A2A40]/40 focus-visible:ring-0 rounded-none" />
-              <Button size="lg" className="rounded-none bg-[#2A2A40] text-white hover:bg-black px-10 font-black uppercase">Join</Button>
-            </div>
+            
+            {hasSubscribed ? (
+              <div className="bg-white p-8 rounded-none shadow-2xl animate-in zoom-in duration-500 flex flex-col items-center gap-4">
+                <div className="h-16 w-16 bg-green-500/10 rounded-full flex items-center justify-center">
+                  <Check className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-black text-[#2A2A40] uppercase">You're in!</h3>
+                <p className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Check your email for the next drop alerts.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2 p-2 bg-white rounded-none shadow-2xl">
+                <Input 
+                  type="email"
+                  required
+                  placeholder="EMAIL ADDRESS" 
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="bg-transparent border-none text-[#2A2A40] font-black placeholder:text-[#2A2A40]/40 focus-visible:ring-0 rounded-none h-12" 
+                />
+                <Button 
+                  type="submit" 
+                  disabled={isSubscribing}
+                  size="lg" 
+                  className="rounded-none bg-[#2A2A40] text-white hover:bg-black px-10 font-black uppercase h-12"
+                >
+                  {isSubscribing ? <Loader2 className="h-5 w-5 animate-spin" /> : "Join"}
+                </Button>
+              </form>
+            )}
           </div>
         </div>
       </section>

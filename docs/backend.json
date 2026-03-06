@@ -62,6 +62,15 @@
         "role": { "type": "string", "enum": ["admin", "customer"] }
       },
       "required": ["id", "email", "role"]
+    },
+    "NewsletterSubscription": {
+      "title": "NewsletterSubscription",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "subscribedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "subscribedAt"]
     }
   },
   "auth": {
@@ -73,7 +82,8 @@
       { "path": "/categories/{categoryId}", "definition": { "entityName": "Category" } },
       { "path": "/orders/{orderId}", "definition": { "entityName": "Order" } },
       { "path": "/userProfiles/{userId}", "definition": { "entityName": "UserProfile" } },
-      { "path": "/userProfiles/{userId}/orders/{orderId}", "definition": { "entityName": "Order" } }
+      { "path": "/userProfiles/{userId}/orders/{orderId}", "definition": { "entityName": "Order" } },
+      { "path": "/newsletterSubscriptions/{email}", "definition": { "entityName": "NewsletterSubscription" } }
     ]
   }
 }
