@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -98,7 +97,7 @@ export default function Home() {
       {/* Brands Slider Section */}
       <section className="py-12 bg-white border-y-2 border-muted/30 overflow-hidden">
         <div className="container mx-auto px-4 mb-8 text-center">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Authentic Brands We Stock</h3>
+          <h3 className="text-sm md:text-lg font-black uppercase tracking-[0.3em] text-primary">Authentic Brands We Stock</h3>
         </div>
         <div className="flex w-full overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap items-center">
