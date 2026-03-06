@@ -12,6 +12,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 
+const BRANDS = ["Nike", "Adidas", "Puma", "Reebok", "Timberland", "Vans", "Converse", "Jordan"];
+
 export default function Home() {
   const db = useFirestore();
   const heroImage = PlaceHolderImages.find(i => i.id === 'hero-shoe')?.imageUrl || "";
@@ -88,6 +90,29 @@ export default function Home() {
                 <h3 className="font-black tracking-widest uppercase text-xs">{badge.title}</h3>
                 <p className="text-[10px] text-white/60 font-black uppercase tracking-wider">{badge.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Brands Slider Section */}
+      <section className="py-12 bg-white border-y-2 border-muted/30 overflow-hidden">
+        <div className="container mx-auto px-4 mb-8 text-center">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Authentic Brands We Stock</h3>
+        </div>
+        <div className="flex w-full overflow-hidden">
+          <div className="flex animate-marquee whitespace-nowrap items-center">
+            {BRANDS.concat(BRANDS).map((brand, i) => (
+              <span key={i} className="text-4xl md:text-6xl font-black text-muted-foreground/20 uppercase tracking-tighter mx-10 md:mx-20 hover:text-secondary transition-colors cursor-default">
+                {brand}
+              </span>
+            ))}
+          </div>
+          <div className="flex animate-marquee whitespace-nowrap items-center" aria-hidden="true">
+            {BRANDS.concat(BRANDS).map((brand, i) => (
+              <span key={i} className="text-4xl md:text-6xl font-black text-muted-foreground/20 uppercase tracking-tighter mx-10 md:mx-20 hover:text-secondary transition-colors cursor-default">
+                {brand}
+              </span>
             ))}
           </div>
         </div>
@@ -217,11 +242,12 @@ export default function Home() {
                 NAIROBI'S PREMIER FOOTWEAR DESTINATION. IT WILL ALWAYS LOOK GOOD ON YOU.
               </p>
               <div className="flex justify-center md:justify-start gap-4">
-                {[Instagram, Zap, ShoppingBag].map((Icon, i) => (
-                  <Button key={i} size="icon" variant="outline" className="border-white/10 hover:bg-secondary hover:text-primary hover:border-secondary rounded-xl">
-                    <Icon className="h-5 w-5" />
-                  </Button>
-                ))}
+                <Button size="icon" variant="outline" className="border-white/10 hover:bg-secondary hover:text-primary hover:border-secondary rounded-xl" asChild>
+                  <a href="https://instagram.com/kreations.254" target="_blank"><Instagram className="h-5 w-5" /></a>
+                </Button>
+                <Button size="icon" variant="outline" className="border-white/10 hover:bg-secondary hover:text-primary hover:border-secondary rounded-xl" asChild>
+                  <a href="https://wa.me/254719112025" target="_blank"><Zap className="h-5 w-5" /></a>
+                </Button>
               </div>
             </div>
             <div>
@@ -245,7 +271,7 @@ export default function Home() {
           </div>
           <Separator className="bg-white/5 mb-10" />
           <div className="flex flex-col md:flex-row justify-between items-center text-[10px] text-white/30 font-black uppercase tracking-[0.2em] gap-6">
-            <p>© 2024 KREATIONS KICKS 254. BUILT FOR THE CULTURE.</p>
+            <p>© 2026 KREATIONS KICKS 254. BUILT FOR THE CULTURE.</p>
             <div className="flex gap-10">
               <Link href="/privacy" className="hover:text-white">Privacy</Link>
               <Link href="/terms" className="hover:text-white">Terms</Link>
