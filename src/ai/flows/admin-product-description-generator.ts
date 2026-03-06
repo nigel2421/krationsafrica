@@ -24,10 +24,6 @@ const GenerateProductDescriptionOutputSchema = z.object({
 });
 export type GenerateProductDescriptionOutput = z.infer<typeof GenerateProductDescriptionOutputSchema>;
 
-export async function generateProductDescription(input: GenerateProductDescriptionInput): Promise<GenerateProductDescriptionOutput> {
-  return adminProductDescriptionGeneratorFlow(input);
-}
-
 const productDescriptionPrompt = ai.definePrompt({
   name: 'productDescriptionPrompt',
   input: { schema: GenerateProductDescriptionInputSchema },
@@ -37,16 +33,19 @@ const productDescriptionPrompt = ai.definePrompt({
 Highlight the unique selling points and appeal to the target audience. Keep the description under 150 words.
 
 Product Details:
-- Name: {{{shoeName}}}
-- Category: {{{category}}}
+- Name: {{shoeName}}
+- Category: {{category}}
 {{#if material}}
-- Material: {{{material}}}
+- Material: {{material}}
 {{/if}}
 {{#if occasion}}
-- Occasion: {{{occasion}}}
+- Occasion: {{occasion}}
 {{/if}}
 {{#if keyFeatures}}
-- Key Features: {{#each keyFeatures}}- {{{this}}}{{/each}}
+- Key Features: 
+{{#each keyFeatures}}
+- {{this}}
+{{/each}}
 {{/if}}
 
 Generate an engaging product description:`,
@@ -59,7 +58,19 @@ const adminProductDescriptionGeneratorFlow = ai.defineFlow(
     outputSchema: GenerateProductDescriptionOutputSchema,
   },
   async (input) => {
-    const { output } = await productDescriptionPrompt(input);
-    return output!;
+    try {
+      const { output } = await productDescriptionPrompt(input);
+      if (!output) {
+        throw new Error('The AI model failed to return a valid description.');
+      }
+      return output;
+    } catch (error: any) {
+      console.error('Genkit Flow Error:', error);
+      throw new Error(`AI Generation Failed: ${error.message || 'Unknown error'}`);
+    }
   }
 );
+
+export async function generateProductDescription(input: GenerateProductDescriptionInput): Promise<GenerateProductDescriptionOutput> {
+  return adminProductDescriptionGeneratorFlow(input);
+}
