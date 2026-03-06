@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -73,7 +74,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Badges - Using hardcoded dark background to ensure visibility of white text */}
+      {/* Trust Badges */}
       <section className="py-16 bg-[#2A2A40] text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -96,20 +97,20 @@ export default function Home() {
 
       {/* Brands Slider Section */}
       <section className="py-12 bg-background border-y-2 border-muted overflow-hidden">
-        <div className="container mx-auto px-4 mb-8 text-center">
-          <h3 className="text-sm md:text-2xl font-black uppercase tracking-[0.3em] text-foreground">Authentic Brands We Stock</h3>
+        <div className="container mx-auto px-4 mb-10 text-center">
+          <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-primary dark:text-foreground">Authentic Brands We Stock</h3>
         </div>
         <div className="flex w-full overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap items-center">
             {BRANDS.concat(BRANDS).map((brand, i) => (
-              <span key={i} className="text-4xl md:text-6xl font-black text-muted-foreground/20 uppercase tracking-tighter mx-10 md:mx-20 hover:text-secondary transition-colors cursor-default">
+              <span key={i} className="text-4xl md:text-6xl font-black text-muted-foreground/30 dark:text-muted-foreground/50 uppercase tracking-tighter mx-10 md:mx-20 hover:text-secondary transition-colors cursor-default">
                 {brand}
               </span>
             ))}
           </div>
           <div className="flex animate-marquee whitespace-nowrap items-center" aria-hidden="true">
             {BRANDS.concat(BRANDS).map((brand, i) => (
-              <span key={i} className="text-4xl md:text-6xl font-black text-muted-foreground/20 uppercase tracking-tighter mx-10 md:mx-20 hover:text-secondary transition-colors cursor-default">
+              <span key={i} className="text-4xl md:text-6xl font-black text-muted-foreground/30 dark:text-muted-foreground/50 uppercase tracking-tighter mx-10 md:mx-20 hover:text-secondary transition-colors cursor-default">
                 {brand}
               </span>
             ))}
@@ -150,7 +151,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-20 bg-muted/10 rounded-3xl border-2 border-dashed">
-              <p className="text-muted-foreground font-bold">Categories are being prepared.</p>
+              <p className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Categories are being prepared.</p>
             </div>
           )}
         </div>
@@ -183,7 +184,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-20 bg-background border rounded-3xl">
-              <p className="text-muted-foreground font-bold">No products in inventory yet.</p>
+              <p className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">No products in inventory yet.</p>
             </div>
           )}
         </div>
@@ -214,7 +215,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter - Using dark text on sky blue for high contrast */}
+      {/* Newsletter */}
       <section className="py-24 bg-secondary">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">

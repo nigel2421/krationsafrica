@@ -36,17 +36,25 @@ export function Navbar() {
     }
   };
 
+  const navLinks = [
+    { label: "Home", href: "/" },
+    { label: "All Kicks", href: "/shop" },
+    { label: "Collections", href: "/#categories" },
+  ];
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-2xl font-black tracking-tighter text-primary">
+          <Link href="/" className="text-2xl font-black tracking-tighter text-primary dark:text-foreground">
             KREATIONS <span className="text-secondary">254</span>
           </Link>
           <div className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-[0.2em]">
-            <Link href="/" className="transition-colors hover:text-secondary">Home</Link>
-            <Link href="/shop" className="transition-colors hover:text-secondary">All Kicks</Link>
-            <Link href="/#categories" className="transition-colors hover:text-secondary">Categories</Link>
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="transition-colors hover:text-secondary">
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -106,16 +114,59 @@ export function Navbar() {
           </Sheet>
 
           {user && (
-            <Link href="/admin/dashboard">
+            <Link href="/admin/dashboard" className="hidden md:block">
               <Button variant="ghost" size="icon">
                 <LayoutDashboard className="h-5 w-5" />
               </Button>
             </Link>
           )}
 
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Mobile Menu (Hamburger) */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+              <SheetHeader className="px-6 py-10 border-b text-left">
+                <SheetTitle className="text-2xl font-black tracking-tighter uppercase text-primary dark:text-foreground">
+                  KREATIONS <span className="text-secondary">254</span>
+                </SheetTitle>
+                <SheetDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  Always Look Good On You
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex-1 px-6 py-8 space-y-2">
+                {navLinks.map((link) => (
+                  <Link 
+                    key={link.href} 
+                    href={link.href} 
+                    className="block text-xl font-black uppercase tracking-tighter py-4 border-b border-muted/50 hover:text-secondary transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                {user && (
+                  <Link 
+                    href="/admin/dashboard" 
+                    className="flex items-center gap-3 text-xl font-black uppercase tracking-tighter py-4 border-b border-muted/50 text-secondary"
+                  >
+                    <LayoutDashboard className="h-6 w-6" /> Admin Console
+                  </Link>
+                )}
+                <div className="pt-8 space-y-4">
+                  <Link href="/help" className="block text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors">Help Center</Link>
+                  <Link href="/contact" className="block text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors">Contact Support</Link>
+                </div>
+              </div>
+              <div className="p-6 border-t bg-muted/20">
+                <p className="text-[8px] font-black uppercase tracking-[0.4em] text-center text-muted-foreground/60">
+                  NAIROBI KENYA • EST. 2026
+                </p>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>
