@@ -194,10 +194,11 @@ export function CartSidebar() {
             {deliveryMethod === "delivery" ? (
               <div className="space-y-4">
                 <h4 className="text-xs font-black uppercase text-muted-foreground tracking-widest">Select Region</h4>
-                <div className="space-y-3">
+                <RadioGroup value={selectedZone} onValueChange={setSelectedZone} className="space-y-3">
                   {DELIVERY_ZONES.map((zone) => (
                     <Label
                       key={zone.id}
+                      htmlFor={zone.id}
                       className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
                         selectedZone === zone.id ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"
                       }`}
@@ -212,7 +213,7 @@ export function CartSidebar() {
                       <span className="font-black text-xs text-secondary">KES {zone.fee}</span>
                     </Label>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
             ) : (
               <div className="p-6 bg-muted/20 border-2 border-dashed rounded-xl space-y-4">
