@@ -65,7 +65,6 @@ export function CartSidebar() {
     notes: "",
   });
 
-  // Load saved details on mount (Memory feature)
   useEffect(() => {
     const saved = localStorage.getItem("kicks_customer_details");
     if (saved) {
@@ -118,7 +117,6 @@ export function CartSidebar() {
 
     setIsSubmitting(true);
     try {
-      // Save details for future convenience (Memory feature)
       localStorage.setItem("kicks_customer_details", JSON.stringify({
         name: details.name,
         phone: details.phone,
@@ -216,6 +214,36 @@ export function CartSidebar() {
     </div>
   );
 
+  const NavigationButtons = () => (
+    <div className="flex gap-2 mt-8">
+      {checkoutStep > 1 && !isSubmitting && (
+        <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep(prev => prev - 1)}>
+          <ChevronLeft className="h-6 w-6" />
+        </Button>
+      )}
+      
+      {checkoutStep < 4 ? (
+        <Button 
+          onClick={() => setCheckoutStep(prev => prev + 1)} 
+          disabled={cart.length === 0 || (checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
+          className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary"
+        >
+          Continue <ChevronRight className="ml-2 h-5 w-5" />
+        </Button>
+      ) : (
+        <Button 
+          onClick={handleWhatsAppCheckout} 
+          disabled={isSubmitting || !acceptedTerms}
+          className={`flex-1 h-14 text-lg font-black uppercase tracking-widest text-white border-none shadow-lg transition-all ${
+            acceptedTerms ? "bg-[#25D366] hover:bg-[#128C7E] scale-100 active:scale-95" : "bg-muted/50 text-muted-foreground cursor-not-allowed"
+          }`}
+        >
+          {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><MessageCircle className="mr-2 h-6 w-6" /> Open WhatsApp</>}
+        </Button>
+      )}
+    </div>
+  );
+
   if (isSuccess) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center space-y-6 animate-in fade-in zoom-in duration-500">
@@ -236,8 +264,8 @@ export function CartSidebar() {
 
   return (
     <div className="flex h-full flex-col bg-background text-foreground overflow-hidden">
-      <ScrollArea className="flex-1 p-4 md:p-6">
-        <div className="pb-32">
+      <ScrollArea className="flex-1">
+        <div className="p-4 md:p-6 pb-24">
           {checkoutStep === 1 && (
             <div className="space-y-6">
               <h3 className="font-black text-lg uppercase tracking-tight">Review Items</h3>
@@ -248,28 +276,31 @@ export function CartSidebar() {
                 </div>
               ) : (
                 <>
-                  {cart.map((item) => (
-                    <div key={item.id} className="flex gap-4 group">
-                      <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors shrink-0">
-                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
-                      </div>
-                      <div className="flex flex-1 flex-col justify-between py-1">
-                        <div>
-                          <h3 className="font-black text-[11px] uppercase tracking-tight leading-none mb-1">{item.name}</h3>
-                          <p className="text-sm font-black text-secondary">KES {item.price.toLocaleString()}</p>
+                  <div className="space-y-4">
+                    {cart.map((item) => (
+                      <div key={item.id} className="flex gap-4 group">
+                        <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors shrink-0">
+                          <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 border-2 rounded-md p-1 border-muted">
-                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 hover:text-secondary"><Minus className="h-3 w-3" /></button>
-                            <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 hover:text-secondary"><Plus className="h-3 w-3" /></button>
+                        <div className="flex flex-1 flex-col justify-between py-1">
+                          <div>
+                            <h3 className="font-black text-[11px] uppercase tracking-tight leading-none mb-1">{item.name}</h3>
+                            <p className="text-sm font-black text-secondary">KES {item.price.toLocaleString()}</p>
                           </div>
-                          <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 border-2 rounded-md p-1 border-muted">
+                              <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 hover:text-secondary"><Minus className="h-3 w-3" /></button>
+                              <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
+                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 hover:text-secondary"><Plus className="h-3 w-3" /></button>
+                            </div>
+                            <button onClick={() => removeFromCart(item.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   <OrderSummary />
+                  <NavigationButtons />
                 </>
               )}
             </div>
@@ -330,33 +361,35 @@ export function CartSidebar() {
                 </div>
               )}
               <OrderSummary />
+              <NavigationButtons />
             </div>
           )}
 
           {checkoutStep === 3 && (
             <div className="space-y-6">
-              <h3 className="font-black text-lg uppercase tracking-tight">Personal Details</h3>
+              <h3 className="font-black text-lg uppercase tracking-tight">Your Details</h3>
               <div className="grid gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                  <Input placeholder="John Doe" className="border-2 h-12 bg-background" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
+                  <Input placeholder="John Doe" className="border-2 h-12 bg-background focus:ring-secondary" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">WhatsApp Number</Label>
-                  <Input placeholder="0712345678" className="border-2 h-12 bg-background" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
+                  <Input placeholder="0712345678" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
                 </div>
                 {deliveryMethod === "delivery" && (
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Exact Location</Label>
-                    <Input placeholder="Estate, Apt, Floor, Door No." className="border-2 h-12 bg-background" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
+                    <Input placeholder="Estate, Apt, Floor, Door No." className="border-2 h-12 bg-background focus:ring-secondary" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
                   </div>
                 )}
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Additional Notes</Label>
-                  <Textarea placeholder="Any specific instructions?" className="border-2 bg-background" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
+                  <Textarea placeholder="Any specific instructions?" className="border-2 bg-background focus:ring-secondary" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
                 </div>
               </div>
               <OrderSummary />
+              <NavigationButtons />
             </div>
           )}
 
@@ -444,40 +477,11 @@ export function CartSidebar() {
                 </div>
               </div>
               <OrderSummary />
+              <NavigationButtons />
             </div>
           )}
         </div>
       </ScrollArea>
-
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-20 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.1)]">
-        <div className="flex gap-2">
-          {checkoutStep > 1 && !isSubmitting && (
-            <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep(prev => prev - 1)}>
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-          )}
-          
-          {checkoutStep < 4 ? (
-            <Button 
-              onClick={() => setCheckoutStep(prev => prev + 1)} 
-              disabled={cart.length === 0 || (checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
-              className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary"
-            >
-              Continue <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleWhatsAppCheckout} 
-              disabled={isSubmitting || !acceptedTerms}
-              className={`flex-1 h-14 text-lg font-black uppercase tracking-widest text-white border-none shadow-lg transition-all ${
-                acceptedTerms ? "bg-[#25D366] hover:bg-[#128C7E] scale-100 active:scale-95" : "bg-muted/50 text-muted-foreground cursor-not-allowed"
-              }`}
-            >
-              {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><MessageCircle className="mr-2 h-6 w-6" /> Open WhatsApp</>}
-            </Button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
