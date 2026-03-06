@@ -4,14 +4,14 @@
 import React, { useState } from "react";
 import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { Plus, Pencil, Trash2, Sparkles, Loader2, Check, Tag, Layers, Search, Filter } from "lucide-react";
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Search, Filter, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
@@ -112,86 +112,70 @@ export default function AdminInventory() {
       });
       setForm({ ...form, description: result.description });
     } catch (e: any) {
-      toast({ title: "AI Error", description: "API enabled?", variant: "destructive" });
+      toast({ title: "AI Error", variant: "destructive" });
     } finally {
       setIsAiGenerating(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Inventory Management</h1>
-          <p className="text-muted-foreground font-medium">Control your catalog and stock levels.</p>
-        </div>
-        <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="h-12 px-8 font-black uppercase tracking-widest bg-secondary text-secondary-foreground hover:bg-secondary/90">
-          <Plus className="mr-2 h-5 w-5" /> Add Product
-        </Button>
+    <div className="space-y-6 pb-20">
+       <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">Catalog</h1>
+        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Manage your shoe inventory</p>
       </div>
 
-      <div className="bg-white rounded-xl border-2 p-6 flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search products by name or brand..." 
+            placeholder="Search catalog..." 
             className="pl-10 h-10 border-2" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" className="font-bold gap-2"><Filter className="h-4 w-4" /> Filters</Button>
-        </div>
+        <Button onClick={() => { resetForm(); setDialogOpen(true); }} className="font-black uppercase tracking-widest bg-secondary text-secondary-foreground">
+          <Plus className="mr-2 h-4 w-4" /> Add New Pair
+        </Button>
       </div>
 
-      <div className="bg-white border-2 rounded-xl overflow-hidden shadow-sm">
+      {/* Desktop Table */}
+      <div className="hidden md:block bg-white border-2 rounded-xl overflow-hidden shadow-sm">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Inventory</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-[10px] uppercase font-black">Visual</TableHead>
+              <TableHead className="text-[10px] uppercase font-black">Shoe Name</TableHead>
+              <TableHead className="text-[10px] uppercase font-black">Category</TableHead>
+              <TableHead className="text-[10px] uppercase font-black">Stock</TableHead>
+              <TableHead className="text-[10px] uppercase font-black">Price</TableHead>
+              <TableHead className="text-right text-[10px] uppercase font-black">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={6} className="h-32 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-secondary" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="h-32 text-center text-[10px] font-black uppercase">Loading Inventory...</TableCell></TableRow>
             ) : filteredProducts?.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>
-                  <div className="h-14 w-14 rounded-lg overflow-hidden border bg-muted">
+                  <div className="h-12 w-12 rounded-lg overflow-hidden border">
                     <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-black text-primary uppercase leading-tight">{product.name}</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase">{product.brand}</span>
+                    <span className="font-black text-primary uppercase text-xs">{product.name}</span>
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase">{product.brand}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                   <Badge variant="outline" className="text-[10px] font-bold uppercase">{product.category}</Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <Badge 
-                      variant={product.stockStatus === "In Stock" ? "default" : product.stockStatus === "Few Left" ? "secondary" : "destructive"}
-                      className="text-[10px] uppercase font-black"
-                    >
-                      {product.stockStatus}
-                    </Badge>
-                    <p className="text-[9px] font-bold text-muted-foreground">Sizes: {product.availableSizes?.length || 0}</p>
-                  </div>
-                </TableCell>
-                <TableCell className="font-black text-secondary">KES {product.price.toLocaleString()}</TableCell>
+                <TableCell><Badge variant="outline" className="text-[9px] font-bold uppercase">{product.category}</Badge></TableCell>
+                <TableCell><Badge className="text-[9px] uppercase font-black">{product.stockStatus}</Badge></TableCell>
+                <TableCell className="font-black text-secondary text-xs">KES {product.price.toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => { if(confirm("Delete?")) deleteDoc(doc(db, "products", product.id)); }}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(product)} className="h-8 w-8"><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => { if(confirm("Delete?")) deleteDoc(doc(db, "products", product.id)); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -200,21 +184,47 @@ export default function AdminInventory() {
         </Table>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-4">
+        {isLoading ? (
+          <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-secondary" /></div>
+        ) : filteredProducts?.map((product) => (
+          <div key={product.id} className="bg-white border-2 rounded-xl p-3 flex gap-3 shadow-sm">
+            <div className="h-20 w-20 rounded-lg overflow-hidden border shrink-0">
+              <img src={product.imageUrl} alt={product.name} className="object-cover h-full w-full" />
+            </div>
+            <div className="flex-1 flex flex-col justify-between py-0.5">
+              <div>
+                <div className="flex justify-between items-start">
+                  <h3 className="font-black text-[11px] uppercase text-primary leading-tight">{product.name}</h3>
+                  <p className="font-black text-xs text-secondary leading-none">KES {product.price.toLocaleString()}</p>
+                </div>
+                <div className="flex gap-1 mt-1">
+                  <Badge variant="outline" className="text-[7px] font-black uppercase px-1 h-3.5 leading-none">{product.category}</Badge>
+                  <Badge className="text-[7px] font-black uppercase px-1 h-3.5 leading-none">{product.stockStatus}</Badge>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-2">
+                <Button variant="outline" size="sm" onClick={() => handleEdit(product)} className="h-7 text-[8px] font-black uppercase px-2">Edit</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[8px] font-black uppercase px-2 text-destructive" onClick={() => { if(confirm("Delete?")) deleteDoc(doc(db, "products", product.id)); }}>Del</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black uppercase tracking-tight">{editingProduct ? "Edit Listing" : "Create Listing"}</DialogTitle>
+            <DialogTitle className="text-xl font-black uppercase tracking-tight">{editingProduct ? "Update Product" : "New Release"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
+                <div className="space-y-2"><Label>Name</Label><Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Shoe Name</Label><Input required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
                   <div className="space-y-2"><Label>Brand</Label><Input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>Price (KES)</Label><Input type="number" required value={form.price} onChange={e => setForm({...form, price: e.target.value})} /></div>
-                  <div className="space-y-2"><Label>Materials</Label><Input value={form.materials} onChange={e => setForm({...form, materials: e.target.value})} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -230,7 +240,7 @@ export default function AdminInventory() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Stock Status</Label>
+                    <Label>Stock</Label>
                     <Select value={form.stockStatus} onValueChange={v => setForm({...form, stockStatus: v})}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -242,29 +252,28 @@ export default function AdminInventory() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between"><Label>Description</Label><Button type="button" variant="ghost" size="sm" onClick={handleAiGenerate} disabled={isAiGenerating} className="text-secondary font-bold gap-1">{isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} AI Copy</Button></div>
-                  <Textarea rows={4} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+                  <div className="flex items-center justify-between"><Label>Description</Label><Button type="button" variant="ghost" size="sm" onClick={handleAiGenerate} disabled={isAiGenerating} className="text-secondary font-black uppercase text-[9px] gap-1">{isAiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} AI Copy</Button></div>
+                  <Textarea rows={3} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
                 </div>
               </div>
               <div className="space-y-4">
-                <Label>Available Sizes (EU)</Label>
-                <div className="flex flex-wrap gap-2 p-4 bg-muted/30 rounded-lg border">
+                <Label>Sizes (EU)</Label>
+                <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg border">
                   {SHOE_SIZES.map(size => (
-                    <div key={size} className="flex items-center space-x-2 bg-white px-3 py-1 rounded border">
+                    <div key={size} className="flex items-center space-x-2 bg-white px-2 py-1 rounded border">
                       <Checkbox id={`s-${size}`} checked={form.availableSizes.includes(size)} onCheckedChange={() => toggleSize(size)} />
-                      <Label htmlFor={`s-${size}`} className="text-xs font-bold">{size}</Label>
+                      <Label htmlFor={`s-${size}`} className="text-[10px] font-bold">{size}</Label>
                     </div>
                   ))}
                 </div>
-                <Label>Product Visuals</Label>
+                <Label>Image</Label>
                 <MediaLibrary selectedUrl={form.imageUrl} onSelect={url => setForm({...form, imageUrl: url})} />
-                {form.imageUrl && <div className="h-40 w-full rounded-xl overflow-hidden border-4 border-secondary/20"><img src={form.imageUrl} className="h-full w-full object-cover" /></div>}
+                {form.imageUrl && <div className="h-32 w-full rounded-xl overflow-hidden border-2 border-secondary/20 mt-2"><img src={form.imageUrl} className="h-full w-full object-cover" /></div>}
               </div>
             </div>
-            <DialogFooter className="border-t pt-4">
-              <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={!form.imageUrl} className="bg-primary font-black uppercase tracking-widest px-10">
-                {editingProduct ? "Save Changes" : "Publish Product"}
+            <DialogFooter>
+              <Button type="submit" disabled={!form.imageUrl} className="w-full bg-primary font-black uppercase tracking-widest h-12">
+                {editingProduct ? "Save Changes" : "Publish Kicks"}
               </Button>
             </DialogFooter>
           </form>

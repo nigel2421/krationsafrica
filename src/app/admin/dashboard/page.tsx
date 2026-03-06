@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -6,12 +7,12 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 import { 
   ShoppingBag, 
   Package, 
-  Clock,
   Loader2,
   DollarSign,
-  Users,
+  Layers,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
+  ChevronRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -33,51 +34,25 @@ export default function AdminDashboardOverview() {
   const db = useFirestore();
 
   // Queries
-  const productsQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, "products"));
-  }, [db]);
-
-  const ordersQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, "orders"), orderBy("orderedAt", "desc"), limit(5));
-  }, [db]);
-
-  const allOrdersQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, "orders"));
-  }, [db]);
-
-  const customersQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, "userProfiles"));
-  }, [db]);
+  const productsQuery = useMemoFirebase(() => query(collection(db, "products")), [db]);
+  const recentOrdersQuery = useMemoFirebase(() => query(collection(db, "orders"), orderBy("orderedAt", "desc"), limit(5)), [db]);
+  const allOrdersQuery = useMemoFirebase(() => query(collection(db, "orders")), [db]);
+  const categoriesQuery = useMemoFirebase(() => query(collection(db, "categories")), [db]);
 
   const { data: products, isLoading: productsLoading, error: productsError } = useCollection(productsQuery);
-  const { data: recentOrders, isLoading: ordersLoading } = useCollection(ordersQuery);
+  const { data: recentOrders, isLoading: ordersLoading } = useCollection(recentOrdersQuery);
   const { data: allOrders } = useCollection(allOrdersQuery);
-  const { data: customers } = useCollection(customersQuery);
+  const { data: categories } = useCollection(categoriesQuery);
 
   // Derived Stats
   const totalRevenue = allOrders?.reduce((acc, order) => acc + (order.totalAmount || 0), 0) || 0;
-  const pendingOrders = allOrders?.filter(o => o.orderStatus === "Pending").length || 0;
-
-  // Chart Data
-  const chartData = [
-    { name: "Mon", revenue: 45000 },
-    { name: "Tue", revenue: 52000 },
-    { name: "Wed", revenue: 48000 },
-    { name: "Thu", revenue: 61000 },
-    { name: "Fri", revenue: 55000 },
-    { name: "Sat", revenue: 67000 },
-    { name: "Sun", revenue: 72000 },
-  ];
+  const pendingOrders = allOrders?.filter(o => o.orderStatus !== "Delivered" && o.orderStatus !== "Cancelled").length || 0;
 
   const stats = [
-    { label: "Total Revenue", value: `KES ${totalRevenue.toLocaleString()}`, icon: DollarSign, trend: "+12.5%", trendUp: true, color: "text-green-500" },
-    { label: "Orders to Fulfill", value: pendingOrders.toString(), icon: ShoppingBag, trend: "Pending", trendUp: false, color: "text-secondary" },
-    { label: "Total Inventory", value: products?.length.toString() || "0", icon: Package, trend: "Products", trendUp: true, color: "text-primary" },
-    { label: "Active Customers", value: customers?.length.toString() || "0", icon: Users, trend: "Users", trendUp: true, color: "text-purple-500" },
+    { label: "Total Revenue", value: `KES ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: "text-green-500", href: "/admin/orders" },
+    { label: "Active Orders", value: pendingOrders.toString(), icon: ShoppingBag, color: "text-secondary", href: "/admin/orders" },
+    { label: "Inventory", value: products?.length.toString() || "0", icon: Package, color: "text-primary", href: "/admin/products" },
+    { label: "Categories", value: categories?.length.toString() || "0", icon: Layers, color: "text-purple-500", href: "/admin/categories" },
   ];
 
   if (productsLoading || ordersLoading) {
@@ -89,62 +64,61 @@ export default function AdminDashboardOverview() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">Business Overview</h1>
-          <p className="text-muted-foreground font-medium">Real-time performance metrics for Kreation 254.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild className="font-bold border-2">
-            <Link href="/test"><ShieldCheck className="mr-2 h-4 w-4 text-secondary" /> Run Diagnostics</Link>
-          </Button>
-          <Badge variant="outline" className="h-8 border-2 font-bold px-4">Live Sync Active</Badge>
-        </div>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-black tracking-tighter uppercase leading-none">Business Overview</h1>
+        <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">Real-time performance metrics</p>
       </div>
 
       {productsError && (
-        <Alert variant="destructive" className="border-2 shadow-lg">
+        <Alert variant="destructive" className="border-2">
           <AlertCircle className="h-5 w-5" />
-          <AlertTitle className="font-black uppercase text-xs">Connectivity Warning</AlertTitle>
-          <AlertDescription className="text-sm">
-            Database access is being restricted. If you are using an **Ad-Blocker** (like uBlock or AdBlock Plus), please **disable it** for this site to see your inventory and orders. Firebase uses WebSocket connections which these tools often block.
+          <AlertTitle className="font-black uppercase text-xs">Connection Error</AlertTitle>
+          <AlertDescription className="text-xs">
+            Database access restricted. Please check your internet or disable Ad-Blockers.
           </AlertDescription>
         </Alert>
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <Card key={i} className="border-2 border-muted/50 hover:border-secondary/50 transition-all shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className={cn("h-5 w-5", stat.color)} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black tracking-tighter">{stat.value}</div>
-              <div className="flex items-center gap-1 mt-1">
-                <span className={cn("text-[10px] font-black uppercase", stat.trendUp ? "text-green-500" : "text-secondary")}>
-                  {stat.trend}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+          <Link key={i} href={stat.href}>
+            <Card className="border-2 border-muted/50 hover:border-secondary/50 transition-all h-full active:scale-95">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 p-4">
+                <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  {stat.label}
+                </CardTitle>
+                <stat.icon className={cn("h-4 w-4", stat.color)} />
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="text-xl md:text-2xl font-black tracking-tighter">{stat.value}</div>
+                <div className="flex items-center gap-1 mt-1 text-[8px] font-black uppercase text-muted-foreground">
+                  Manage <ChevronRight className="h-2 w-2" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
-        <Card className="lg:col-span-2 border-2 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-black uppercase tracking-tight">Revenue Trends</CardTitle>
-            <CardDescription>Daily sales performance for the current week.</CardDescription>
+        <Card className="lg:col-span-2 border-2 hidden md:block">
+          <CardHeader className="p-4">
+            <CardTitle className="text-sm font-black uppercase tracking-tight">Revenue Trends</CardTitle>
           </CardHeader>
-          <CardContent className="h-[350px]">
+          <CardContent className="h-[250px] p-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={[
+                { name: "Mon", revenue: totalRevenue * 0.1 },
+                { name: "Tue", revenue: totalRevenue * 0.15 },
+                { name: "Wed", revenue: totalRevenue * 0.12 },
+                { name: "Thu", revenue: totalRevenue * 0.18 },
+                { name: "Fri", revenue: totalRevenue * 0.2 },
+                { name: "Sat", revenue: totalRevenue * 0.12 },
+                { name: "Sun", revenue: totalRevenue * 0.13 },
+              ]}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3AC8F3" stopOpacity={0.3}/>
@@ -152,49 +126,45 @@ export default function AdminDashboardOverview() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} 
-                  itemStyle={{ fontWeight: 800, color: '#424266' }}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="#3AC8F3" strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 700 }} />
+                <Tooltip />
+                <Area type="monotone" dataKey="revenue" stroke="#3AC8F3" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Recent Orders Table */}
-        <Card className="border-2 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
+        {/* Recent Orders List */}
+        <Card className="border-2">
+          <CardHeader className="flex flex-row items-center justify-between p-4">
             <div>
-              <CardTitle className="text-lg font-black uppercase tracking-tight">Recent Sales</CardTitle>
-              <CardDescription>Last 5 orders placed.</CardDescription>
+              <CardTitle className="text-sm font-black uppercase tracking-tight">Recent Sales</CardTitle>
             </div>
-            <Button variant="outline" size="sm" asChild className="h-8 text-[10px] font-black uppercase">
+            <Button variant="outline" size="sm" asChild className="h-7 text-[8px] font-black uppercase">
               <Link href="/admin/orders">View All</Link>
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
+          <CardContent className="p-4 pt-0">
+            <div className="space-y-4">
               {recentOrders?.map((order) => (
-                <div key={order.id} className="flex items-center justify-between">
+                <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center">
-                      <ShoppingBag className="h-5 w-5 text-secondary" />
+                    <div className="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                      <ShoppingBag className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-black uppercase tracking-tight leading-none mb-1">{order.customerName}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono">{order.id.slice(-6).toUpperCase()}</p>
+                      <p className="text-[11px] font-black uppercase leading-none mb-1">{order.customerName}</p>
+                      <p className="text-[9px] text-muted-foreground font-mono">#{order.id.slice(-4).toUpperCase()}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-black text-primary">KES {order.totalAmount?.toLocaleString()}</p>
-                    <Badge variant="secondary" className="text-[8px] h-4 px-1 uppercase font-bold">{order.orderStatus}</Badge>
+                    <p className="text-[11px] font-black text-primary">KES {order.totalAmount?.toLocaleString()}</p>
+                    <Badge variant="secondary" className="text-[7px] h-3 px-1 uppercase font-black">{order.orderStatus}</Badge>
                   </div>
-                </div>
+                </Link>
               ))}
-              {!recentOrders?.length && <p className="text-center text-muted-foreground text-xs py-10 font-bold">No recent orders.</p>}
+              {!recentOrders?.length && <p className="text-center text-muted-foreground text-[10px] py-10 font-bold uppercase">No recent activity</p>}
             </div>
           </CardContent>
         </Card>
