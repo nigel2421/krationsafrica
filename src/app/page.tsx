@@ -73,8 +73,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Badges */}
-      <section className="py-16 bg-primary text-white">
+      {/* Trust Badges - Using hardcoded dark background to ensure visibility of white text */}
+      <section className="py-16 bg-[#2A2A40] text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
@@ -95,9 +95,9 @@ export default function Home() {
       </section>
 
       {/* Brands Slider Section */}
-      <section className="py-12 bg-white border-y-2 border-muted/30 overflow-hidden">
+      <section className="py-12 bg-background border-y-2 border-muted overflow-hidden">
         <div className="container mx-auto px-4 mb-8 text-center">
-          <h3 className="text-sm md:text-lg font-black uppercase tracking-[0.3em] text-primary">Authentic Brands We Stock</h3>
+          <h3 className="text-sm md:text-2xl font-black uppercase tracking-[0.3em] text-foreground">Authentic Brands We Stock</h3>
         </div>
         <div className="flex w-full overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap items-center">
@@ -121,7 +121,7 @@ export default function Home() {
       <section id="categories" className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="mb-16 flex flex-col items-center text-center">
-            <h2 className="text-5xl font-black text-primary tracking-tighter uppercase mb-4">The Collections</h2>
+            <h2 className="text-5xl font-black text-primary dark:text-foreground tracking-tighter uppercase mb-4">The Collections</h2>
             <p className="text-muted-foreground font-black uppercase text-xs tracking-[0.3em]">IT WILL ALWAYS LOOK GOOD ON YOU</p>
           </div>
           
@@ -161,7 +161,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div className="max-w-xl">
-              <h2 className="text-5xl font-black text-primary tracking-tighter uppercase mb-2">New Arrivals</h2>
+              <h2 className="text-5xl font-black text-primary dark:text-foreground tracking-tighter uppercase mb-2">New Arrivals</h2>
               <p className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">Handpicked for the culture.</p>
             </div>
             <Button asChild variant="link" className="text-secondary font-black text-xl p-0 hover:no-underline hover:opacity-80">
@@ -214,23 +214,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter */}
+      {/* Newsletter - Using dark text on sky blue for high contrast */}
       <section className="py-24 bg-secondary">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
-            <Mail className="h-12 w-12 mx-auto mb-6 text-primary" />
-            <h2 className="text-5xl font-black text-primary tracking-tighter uppercase mb-4">THE INNER CIRCLE</h2>
-            <p className="text-primary/70 font-black mb-10 text-sm uppercase tracking-[0.2em]">GET DROP ALERTS & EXCLUSIVE ACCESS.</p>
+            <Mail className="h-12 w-12 mx-auto mb-6 text-[#2A2A40]" />
+            <h2 className="text-5xl font-black text-[#2A2A40] tracking-tighter uppercase mb-4">THE INNER CIRCLE</h2>
+            <p className="text-[#2A2A40]/70 font-black mb-10 text-sm uppercase tracking-[0.2em]">GET DROP ALERTS & EXCLUSIVE ACCESS.</p>
             <div className="flex gap-2 p-2 bg-white rounded-none shadow-2xl">
-              <Input placeholder="EMAIL ADDRESS" className="bg-transparent border-none text-primary font-black placeholder:text-primary/40 focus-visible:ring-0 rounded-none" />
-              <Button size="lg" className="rounded-none bg-primary text-white hover:bg-black px-10 font-black uppercase">Join</Button>
+              <Input placeholder="EMAIL ADDRESS" className="bg-transparent border-none text-[#2A2A40] font-black placeholder:text-[#2A2A40]/40 focus-visible:ring-0 rounded-none" />
+              <Button size="lg" className="rounded-none bg-[#2A2A40] text-white hover:bg-black px-10 font-black uppercase">Join</Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-primary pt-24 pb-12 text-white">
+      <footer className="bg-primary dark:bg-black pt-24 pb-12 text-white">
         <div className="container mx-auto px-4 text-center md:text-left">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
             <div className="col-span-1 md:col-span-2 space-y-8">

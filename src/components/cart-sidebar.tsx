@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -146,8 +145,8 @@ export function CartSidebar() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-background text-foreground">
-      <ScrollArea className="flex-1 p-4 md:p-6">
+    <div className="flex h-full flex-col bg-background text-foreground overflow-hidden">
+      <ScrollArea className="flex-1 p-4 md:p-6 pb-32">
         {checkoutStep === 1 && (
           <div className="space-y-6">
             <h3 className="font-black text-lg uppercase tracking-tight text-foreground">Review Items</h3>
@@ -268,7 +267,7 @@ export function CartSidebar() {
               <p className="text-muted-foreground text-sm font-medium">Please review our payment policy to finalize your purchase.</p>
             </div>
 
-            <div className="bg-primary text-white p-6 rounded-2xl space-y-6 shadow-xl border-t-4 border-secondary">
+            <div className="bg-[#2A2A40] text-white p-6 rounded-2xl space-y-6 shadow-xl border-t-4 border-secondary">
               <div className="space-y-2">
                 <h4 className="text-secondary font-black text-xs uppercase tracking-[0.2em]">Important Disclaimer</h4>
                 <p className="text-sm font-bold leading-relaxed">
@@ -294,14 +293,14 @@ export function CartSidebar() {
               </ul>
             </div>
 
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-2 pb-10">
               <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">IT WILL ALWAYS LOOK GOOD ON YOU</p>
             </div>
           </div>
         )}
       </ScrollArea>
 
-      <div className="p-4 md:p-6 bg-background border-t-2 border-muted">
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-background border-t-2 border-muted z-10">
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between text-[10px] font-black uppercase text-muted-foreground tracking-widest">
             <span>Subtotal</span>
