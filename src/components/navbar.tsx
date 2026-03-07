@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@/firebase";
 
 export function Navbar() {
+  // CRITICAL: Call all hooks at the top level to follow Rules of Hooks
   const { totalItems } = useCart();
   const { totalWishlistItems } = useWishlist();
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -20,12 +21,15 @@ export function Navbar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (document.documentElement.classList.contains("dark")) {
-      setTheme("dark");
+    // Only run on client
+    if (typeof window !== 'undefined') {
+      if (document.documentElement.classList.contains("dark")) {
+        setTheme("dark");
+      }
     }
   }, []);
 
-  // Hide Navbar completely on admin routes - Moved after hook calls to avoid violation
+  // Hide Navbar completely on admin routes - Called AFTER all hooks
   if (pathname.startsWith("/admin")) return null;
 
   const toggleTheme = () => {
@@ -82,7 +86,7 @@ export function Navbar() {
             <SheetContent className="w-full sm:max-w-md p-0 flex flex-col">
               <SheetHeader className="px-6 py-4 border-b">
                 <SheetTitle className="font-black uppercase tracking-tighter text-2xl">Your Wishlist</SheetTitle>
-                <SheetDescription className="font-medium">
+                <SheetDescription className="font-medium text-xs">
                   Pairs that look good on you. Move them to cart when ready.
                 </SheetDescription>
               </SheetHeader>
@@ -107,7 +111,7 @@ export function Navbar() {
             <SheetContent className="w-full sm:max-w-md p-0 flex flex-col">
               <SheetHeader className="px-6 py-4 border-b">
                 <SheetTitle className="font-black uppercase tracking-tighter text-2xl">Shopping Cart</SheetTitle>
-                <SheetDescription className="font-medium">
+                <SheetDescription className="font-medium text-xs">
                   Review your selection before WhatsApp checkout.
                 </SheetDescription>
               </SheetHeader>

@@ -13,8 +13,17 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      let adminEmails = ['nigel2421@gmail.com', 'nigelandahua@outlook.com'];
-      let adminUids = ['TMsYLdQiIENfcUnviF8Jpe0WUS93', 'MHlWC7fUH2RkmDpBBAKt0vMYA4W2'];
+      // List of authorized admin emails and UIDs
+      let adminEmails = [
+        'nigel2421@gmail.com', 
+        'nigelandahua@outlook.com', 
+        'vk101mwanzia@gmail.com'
+      ];
+      let adminUids = [
+        'TMsYLdQiIENfcUnviF8Jpe0WUS93', 
+        'MHlWC7fUH2RkmDpBBAKt0vMYA4W2',
+        'G0QIvRx7N7TSfYk9bIB1wWwkO6E3'
+      ];
       
       return isSignedIn() && (
         (request.auth.token.email in adminEmails) || 
@@ -28,12 +37,12 @@ service cloud.firestore {
 
     // Public access for products and categories (Browsing)
     match /products/{productId} {
-      allow get, list: if true;
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /categories/{categoryId} {
-      allow get, list: if true;
+      allow read: if true;
       allow write: if isAdmin();
     }
 
@@ -51,7 +60,7 @@ service cloud.firestore {
 
     // Media: Publicly readable images, admin-only writes
     match /media/{mediaId} {
-      allow get, list: if true;
+      allow read: if true;
       allow write: if isAdmin();
     }
 
@@ -72,4 +81,4 @@ service cloud.firestore {
     }
   }
 }
-// Rules applied at: 2026-03-06T14:45:00Z
+// Rules applied at: 2026-03-06T15:00:00Z
