@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -20,14 +19,14 @@ export function Navbar() {
   const { user } = useUser();
   const pathname = usePathname();
 
-  // Hide Navbar completely on admin routes
-  if (pathname.startsWith("/admin")) return null;
-
   useEffect(() => {
     if (document.documentElement.classList.contains("dark")) {
       setTheme("dark");
     }
   }, []);
+
+  // Hide Navbar completely on admin routes - Moved after hook calls to avoid violation
+  if (pathname.startsWith("/admin")) return null;
 
   const toggleTheme = () => {
     if (theme === "light") {
