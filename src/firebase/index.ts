@@ -28,14 +28,16 @@ export function getSdks(firebaseApp: FirebaseApp) {
   let firestore: Firestore;
 
   try {
-    // Use initializeFirestore to enable persistence and experimental features.
-    // This can only be called once per app instance.
-    firestore = initializeFirestore(firebaseApp, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
+    // Only attempt to enable persistence on the client
+    if (typeof window !== 'undefined') {
+      firestore = initializeFirestore(firebaseApp, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      });
+    } else {
+      firestore = getFirestore(firebaseApp);
+    }
   } catch (e) {
-    // If initializeFirestore was already called (e.g. during a hot reload or by another module),
-    // getFirestore() will return the existing instance.
+    // If initializeFirestore was already called or fails due to SSR constraints
     firestore = getFirestore(firebaseApp);
   }
 

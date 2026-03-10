@@ -12,7 +12,8 @@ import {
   AlertCircle,
   ChevronRight,
   TrendingUp,
-  Activity
+  Activity,
+  Globe
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -78,7 +79,7 @@ export default function AdminDashboardOverview() {
       <div className="flex h-[60vh] items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-secondary mx-auto" />
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fetching business data...</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Syncing East African Market Data...</p>
         </div>
       </div>
     );
@@ -89,11 +90,11 @@ export default function AdminDashboardOverview() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">Console</h1>
-          <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-[0.4em] mt-2">IT WILL ALWAYS LOOK GOOD ON YOU</p>
+          <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-[0.4em] mt-2">EAST AFRICA'S PREMIERE FOOTWEAR DESTINATION</p>
         </div>
         <div className="flex items-center gap-2 bg-secondary/10 px-4 py-2 rounded-full border border-secondary/20">
-           <Activity className="h-4 w-4 text-secondary" />
-           <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Market Live</span>
+           <Globe className="h-4 w-4 text-secondary animate-pulse" />
+           <span className="text-[10px] font-black uppercase text-secondary tracking-widest">Regional Sync Active</span>
         </div>
       </div>
 
@@ -102,12 +103,11 @@ export default function AdminDashboardOverview() {
           <AlertCircle className="h-5 w-5" />
           <AlertTitle className="font-black uppercase text-xs">Connection Warning</AlertTitle>
           <AlertDescription className="text-xs font-medium">
-            We're having trouble reaching the database. If your internet is active, please **disable your Ad-Blocker** for this site.
+            We're having trouble reaching the database. Please check your regional connection or disable any active ad-blockers.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, i) => (
           <Link key={i} href={stat.href}>
@@ -132,12 +132,11 @@ export default function AdminDashboardOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sales Chart */}
         <Card className="lg:col-span-2 border-2 rounded-2xl shadow-sm overflow-hidden bg-white">
           <CardHeader className="p-8 border-b bg-muted/5 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-green-500" /> Revenue Trends
+                <TrendingUp className="h-4 w-4 text-green-500" /> Regional Revenue Trends
               </CardTitle>
             </div>
           </CardHeader>
@@ -163,7 +162,6 @@ export default function AdminDashboardOverview() {
           </CardContent>
         </Card>
 
-        {/* Recent Orders List */}
         <Card className="border-2 rounded-2xl shadow-sm overflow-hidden bg-white">
           <CardHeader className="flex flex-row items-center justify-between p-8 border-b bg-muted/5">
             <CardTitle className="text-sm font-black uppercase tracking-widest">Recent Activity</CardTitle>

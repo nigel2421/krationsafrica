@@ -41,7 +41,7 @@ service cloud.firestore {
 
     // --- COLLECTION RULES ---
 
-    // Products and Categories: Publicly readable for the storefront
+    // Products and Categories: Globally readable for storefront
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -55,16 +55,16 @@ service cloud.firestore {
     // Newsletter: Public can subscribe (create), only admins can manage the list
     match /newsletterSubscriptions/{email} {
       allow create: if true;
-      allow get, list, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     // Orders: Public can create (checkout), only admins manage fulfillment
     match /orders/{orderId} {
       allow create: if true;
-      allow get, list, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
-    // Media: Publicly readable assets
+    // Media: Publicly readable assets for the catalog, restricted writes
     match /media/{mediaId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -80,12 +80,11 @@ service cloud.firestore {
 
       // Orders sub-collection for account history
       match /orders/{orderId} {
-        allow get, list: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId);
-        allow update, delete: if isAdmin();
+        allow write: if isAdmin();
       }
     }
   }
 }
-// Rules refreshed to resolve public listing permissions.
-// Deployment sequence: 2026-03-10T12:45:00Z
+// Forced Rule Synchronization Sequence: 2026-03-10T14:00:00Z
