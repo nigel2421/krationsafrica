@@ -22,7 +22,8 @@ import {
   Copy,
   CheckCircle2,
   Info,
-  Mail
+  Mail,
+  Globe
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -37,12 +38,56 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const DELIVERY_ZONES = [
-  { id: "zone1", label: "Zone 1 (CBD & Close)", description: "CBD, Upperhill, Ngara, Pangani", fee: 200 },
-  { id: "zone2", label: "Zone 2 (Suburbs)", description: "Westlands, Kilimani, Lavington, South B/C", fee: 300 },
-  { id: "zone3", label: "Zone 3 (Mid-Range)", description: "Langata, Kasarani, Roysambu, Embakasi", fee: 350 },
-  { id: "zone4", label: "Zone 4 (Outskirts)", description: "Karen, Runda, Syokimau, Kitengela, Rongai", fee: 500 },
+const DELIVERY_REGIONS = [
+  { 
+    country: "Kenya", 
+    zones: [
+      { id: "ke-nbi", label: "Nairobi & Environs", description: "CBD, Westlands, Kilimani, Langata", fee: 300 },
+      { id: "ke-major", label: "Kenya Major Towns", description: "Mombasa, Kisumu, Nakuru, Eldoret", fee: 600 },
+      { id: "ke-up", label: "Kenya Upcountry", description: "All other towns in Kenya", fee: 800 },
+    ]
+  },
+  { 
+    country: "Uganda", 
+    zones: [
+      { id: "ug-kla", label: "Kampala Hub", description: "Central Kampala & Entebbe", fee: 1500 },
+      { id: "ug-up", label: "Uganda Regional", description: "Jinja, Mbarara, Gulu", fee: 2000 },
+    ]
+  },
+  { 
+    country: "Tanzania", 
+    zones: [
+      { id: "tz-dar", label: "Dar es Salaam", description: "City Center & Suburbs", fee: 1800 },
+      { id: "tz-ar", label: "Arusha / Moshi", description: "Northern Hubs", fee: 1500 },
+    ]
+  },
+  { 
+    country: "South Sudan", 
+    zones: [
+      { id: "ss-juba", label: "Juba Hub", description: "Juba City Delivery", fee: 3500 },
+    ]
+  },
+  { 
+    country: "Rwanda", 
+    zones: [
+      { id: "rw-kgl", label: "Kigali Hub", description: "Kigali Metropolitan", fee: 2000 },
+    ]
+  },
+  { 
+    country: "DR Congo", 
+    zones: [
+      { id: "cd-east", label: "Eastern DRC", description: "Goma, Bukavu, Beni", fee: 3000 },
+      { id: "cd-kin", label: "Kinshasa", description: "Main City Hub", fee: 5000 },
+    ]
+  },
+  { 
+    country: "Burundi", 
+    zones: [
+      { id: "bi-bjm", label: "Bujumbura", description: "City Center Delivery", fee: 2500 },
+    ]
+  }
 ];
 
 export function CartSidebar() {
@@ -56,6 +101,7 @@ export function CartSidebar() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
+  const [selectedCountry, setSelectedCountry] = useState<string>("Kenya");
   const [selectedZone, setSelectedZone] = useState<string>("");
   
   const [details, setDetails] = useState({
@@ -84,7 +130,14 @@ export function CartSidebar() {
     }
   }, []);
 
-  const deliveryFee = deliveryMethod === "delivery" ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.fee || 0) : 0;
+  // Reset zone when country changes
+  useEffect(() => {
+    setSelectedZone("");
+  }, [selectedCountry]);
+
+  const currentZones = DELIVERY_REGIONS.find(r => r.country === selectedCountry)?.zones || [];
+  const activeZone = currentZones.find(z => z.id === selectedZone);
+  const deliveryFee = deliveryMethod === "delivery" ? (activeZone?.fee || 0) : 0;
   const grandTotal = totalPrice + deliveryFee;
 
   const copyToClipboard = (text: string, label: string) => {
@@ -129,8 +182,8 @@ export function CartSidebar() {
       const storeNumber = "254719112025";
       const orderId = generateOrderId();
       const zoneLabel = deliveryMethod === "delivery" 
-        ? (DELIVERY_ZONES.find(z => z.id === selectedZone)?.label || "Delivery") 
-        : "Store Pick-up (Royal Palms Mall)";
+        ? `${selectedCountry}: ${activeZone?.label || "Regional"}`
+        : "Store Pick-up (Royal Palms Mall, Nairobi)";
       
       const normalizedCustomerPhone = normalizePhone(details.phone);
       
@@ -143,7 +196,7 @@ export function CartSidebar() {
         customerName: details.name,
         customerEmail: details.email.toLowerCase().trim(),
         customerPhoneNumber: normalizedCustomerPhone,
-        deliveryLocation: deliveryMethod === "delivery" ? details.location : "Royal Palms Mall, Shop BF01",
+        deliveryLocation: deliveryMethod === "delivery" ? details.location : "Royal Palms Mall, Shop BF01, Nairobi",
         deliveryRegion: zoneLabel,
         deliveryFee: deliveryFee,
         specialNotes: details.notes,
@@ -156,7 +209,6 @@ export function CartSidebar() {
       };
 
       if (db) {
-        // Create Order
         const globalOrderRef = doc(db, "orders", orderId);
         await setDoc(globalOrderRef, orderData);
         if (user) {
@@ -164,7 +216,6 @@ export function CartSidebar() {
           await setDoc(userOrderRef, orderData);
         }
 
-        // Add to mailing list (Newsletter Subscriptions)
         if (details.email) {
           const subscriptionRef = doc(db, "newsletterSubscriptions", details.email.toLowerCase().trim());
           await setDoc(subscriptionRef, {
@@ -181,7 +232,7 @@ export function CartSidebar() {
         `*Order ID:* ${orderId}\n\n` +
         `*Customer:* ${details.name}\n` +
         `*Phone:* ${normalizedCustomerPhone}\n` +
-        `*Method:* ${deliveryMethod === "delivery" ? "Delivery" : "Pick-up"}\n` +
+        `*Method:* ${deliveryMethod === "delivery" ? "Regional Delivery" : "Pick-up"}\n` +
         `${deliveryMethod === "delivery" ? `*Location:* ${details.location}\n*Region:* ${zoneLabel}\n` : "*Location:* Royal Palms Mall, Shop BF01, Nairobi CBD\n"}` +
         `${details.notes ? `*Notes:* ${details.notes}\n` : ""}\n` +
         `*Items Ordered:*\n` +
@@ -220,7 +271,7 @@ export function CartSidebar() {
       </div>
       {deliveryMethod === "delivery" && deliveryFee > 0 && (
         <div className="flex items-center justify-between text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-          <span>Delivery Fee</span>
+          <span>{selectedCountry} Delivery Fee</span>
           <span>KES {deliveryFee.toLocaleString()}</span>
         </div>
       )}
@@ -328,43 +379,62 @@ export function CartSidebar() {
 
           {checkoutStep === 2 && (
             <div className="space-y-6">
-              <h3 className="font-black text-lg uppercase tracking-tight">Delivery Method</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-black text-lg uppercase tracking-tight">Shipping Route</h3>
+                <Globe className="h-5 w-5 text-secondary animate-pulse" />
+              </div>
               <RadioGroup value={deliveryMethod} onValueChange={(v: any) => setDeliveryMethod(v)} className="grid grid-cols-2 gap-4">
                 <Label className={`flex flex-col items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all gap-2 text-center ${deliveryMethod === "delivery" ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"}`}>
                   <RadioGroupItem value="delivery" className="sr-only" />
                   <Truck className={`h-6 w-6 ${deliveryMethod === "delivery" ? "text-secondary" : "text-muted-foreground"}`} />
-                  <span className="font-black text-[10px] uppercase">Express Delivery</span>
+                  <span className="font-black text-[10px] uppercase">Regional Delivery</span>
                 </Label>
                 <Label className={`flex flex-col items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all gap-2 text-center ${deliveryMethod === "pickup" ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"}`}>
                   <RadioGroupItem value="pickup" className="sr-only" />
                   <Store className={`h-6 w-6 ${deliveryMethod === "pickup" ? "text-secondary" : "text-muted-foreground"}`} />
-                  <span className="font-black text-[10px] uppercase">Shop Pick-up</span>
+                  <span className="font-black text-[10px] uppercase">Nairobi Pick-up</span>
                 </Label>
               </RadioGroup>
 
               {deliveryMethod === "delivery" ? (
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase text-muted-foreground tracking-widest">Select Region</h4>
-                  <RadioGroup value={selectedZone} onValueChange={setSelectedZone} className="space-y-3">
-                    {DELIVERY_ZONES.map((zone) => (
-                      <Label
-                        key={zone.id}
-                        htmlFor={zone.id}
-                        className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                          selectedZone === zone.id ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <RadioGroupItem value={zone.id} id={zone.id} />
-                          <div className="space-y-1">
-                            <p className="font-black text-[10px] uppercase">{zone.label}</p>
-                            <p className="text-[9px] text-muted-foreground leading-none">{zone.description}</p>
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Destination Country</Label>
+                    <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                      <SelectTrigger className="border-2 h-12">
+                        <SelectValue placeholder="Country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DELIVERY_REGIONS.map(r => (
+                          <SelectItem key={r.country} value={r.country}>{r.country}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Select Regional Hub</h4>
+                    <RadioGroup value={selectedZone} onValueChange={setSelectedZone} className="space-y-3">
+                      {currentZones.map((zone) => (
+                        <Label
+                          key={zone.id}
+                          htmlFor={zone.id}
+                          className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                            selectedZone === zone.id ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <RadioGroupItem value={zone.id} id={zone.id} />
+                            <div className="space-y-1">
+                              <p className="font-black text-[10px] uppercase">{zone.label}</p>
+                              <p className="text-[9px] text-muted-foreground leading-none">{zone.description}</p>
+                            </div>
                           </div>
-                        </div>
-                        <span className="font-black text-xs text-secondary">KES {zone.fee}</span>
-                      </Label>
-                    ))}
-                  </RadioGroup>
+                          <span className="font-black text-xs text-secondary">KES {zone.fee.toLocaleString()}</span>
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                  </div>
                 </div>
               ) : (
                 <div className="p-6 bg-muted/20 border-2 border-dashed rounded-xl space-y-4">
@@ -402,17 +472,17 @@ export function CartSidebar() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
-                  <Input placeholder="0719112025" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                  <Input placeholder="07XXXXXXXX" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
                 </div>
                 {deliveryMethod === "delivery" && (
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Exact Location</Label>
-                    <Input placeholder="Estate, Apt, Floor, Door No." className="border-2 h-12 bg-background focus:ring-secondary" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Physical Delivery Address</Label>
+                    <Input placeholder="City, Street, Apartment/House No." className="border-2 h-12 bg-background focus:ring-secondary" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
                   </div>
                 )}
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Additional Notes</Label>
-                  <Textarea placeholder="Any specific instructions?" className="border-2 bg-background focus:ring-secondary" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
+                  <Textarea placeholder="Any specific instructions for our regional carriers?" className="border-2 bg-background focus:ring-secondary" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
                 </div>
               </div>
               <OrderSummary />
@@ -427,7 +497,7 @@ export function CartSidebar() {
                   <ShieldAlert className="h-10 w-10 text-secondary" />
                 </div>
                 <h3 className="font-black text-2xl uppercase tracking-tighter leading-none">Final Step</h3>
-                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Complete payment to finalize your order.</p>
+                <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Secure your regional order via M-Pesa.</p>
               </div>
 
               <div className="bg-[#1E40AF] text-white p-1 rounded-3xl overflow-hidden shadow-2xl">
@@ -470,7 +540,7 @@ export function CartSidebar() {
                   </div>
                 </div>
                 <div className="p-4 text-center bg-primary/20 backdrop-blur-sm">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Powered by Family Bank</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">East Africa Logistics Group</p>
                 </div>
               </div>
 
@@ -482,7 +552,7 @@ export function CartSidebar() {
                   <p className="text-[11px] font-medium leading-relaxed text-muted-foreground">
                     1. Copy the payment details above and pay via M-Pesa.<br/>
                     2. Accept the terms below to enable the WhatsApp button.<br/>
-                    3. Share your <strong>Payment Confirmation</strong> message in the WhatsApp chat.
+                    3. Share your <strong>Payment Confirmation</strong> message in the WhatsApp chat to initiate regional shipping.
                   </p>
                 </div>
                 

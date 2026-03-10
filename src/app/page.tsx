@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Zap, ShieldCheck, Truck, ShoppingBag, Star, Mail, Instagram, ChevronDown, Loader2, Check } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, Truck, ShoppingBag, Star, Mail, Instagram, ChevronDown, Loader2, Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -88,19 +87,19 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10 text-center">
           <div className="max-w-5xl mx-auto">
              <div className="flex flex-col items-center mb-12 animate-in fade-in zoom-in duration-700">
-               <span className="text-secondary font-black tracking-[0.5em] text-sm uppercase mb-4">KREATIONS 254</span>
+               <span className="text-secondary font-black tracking-[0.5em] text-sm uppercase mb-4">EAST AFRICA'S PREMIERE</span>
                <h1 className="text-7xl md:text-9xl font-black text-white tracking-tighter leading-[0.8] mb-8 uppercase">
                  ALWAYS LOOK <span className="text-secondary">GOOD</span> ON YOU.
                </h1>
                <div className="h-1 w-24 bg-secondary mt-4" />
              </div>
             <p className="text-lg md:text-xl text-white/70 font-medium mb-12 max-w-2xl mx-auto uppercase tracking-widest leading-relaxed">
-              Step into the boldest collection in Nairobi. Authentic. Exclusive. Yours.
+              Step into the boldest collection in East Africa. Authentic. Exclusive. Yours.
             </p>
             <div className="flex flex-wrap justify-center gap-6">
               <Button asChild size="lg" className="h-16 px-12 text-xl font-black uppercase bg-secondary text-secondary-foreground hover:bg-white rounded-none border-b-4 border-secondary/50">
                 <Link href="/shop">
-                  Explore Now
+                  Explore Catalog
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Link>
               </Button>
@@ -112,14 +111,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Badges */}
+      {/* Regional Trust Badges */}
       <section className="py-16 bg-[#2A2A40] text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
-              { icon: Truck, title: "EXPRESS DELIVERY", desc: "Across Kenya within 24-48 hours." },
-              { icon: ShieldCheck, title: "AUTHENTIC QUALITY", desc: "Every pair inspected for perfection." },
-              { icon: Zap, title: "WHATSAPP ORDERS", desc: "Seamless checkout & instant updates." }
+              { icon: Globe, title: "EAST AFRICAN LOGISTICS", desc: "Shipping to UG, TZ, RW, SS, DRC & Burundi." },
+              { icon: ShieldCheck, title: "AUTHENTIC QUALITY", desc: "Every pair inspected for regional excellence." },
+              { icon: Zap, title: "WHATSAPP ORDERS", desc: "Real-time support across the borders." }
             ].map((badge, i) => (
               <div key={i} className="flex flex-col items-center text-center gap-4">
                 <div className="bg-secondary/10 p-4 rounded-full border border-secondary/20">
@@ -242,8 +241,8 @@ export default function Home() {
            <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
              {[
                { icon: Star, title: "CURATED SELECTION", text: "We don't sell everything. We only sell the best." },
-               { icon: ShieldCheck, title: "GUARANTEED AUTHENTIC", text: "Every stitch verified by our experts." },
-               { icon: Truck, title: "NAIROBI FAST", text: "Same day delivery within the city limits." }
+               { icon: ShieldCheck, title: "GUARANTEED AUTHENTIC", text: "Every stitch verified by our regional experts." },
+               { icon: Truck, title: "REGION-WIDE SPEED", text: "Swift delivery from Nairobi to all of East Africa." }
              ].map((item, i) => (
                <div key={i} className="space-y-6 flex flex-col items-center">
                  <div className="h-20 w-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
@@ -263,7 +262,7 @@ export default function Home() {
           <div className="max-w-2xl mx-auto">
             <Mail className="h-12 w-12 mx-auto mb-6 text-[#2A2A40]" />
             <h2 className="text-5xl font-black text-[#2A2A40] tracking-tighter uppercase mb-4">THE INNER CIRCLE</h2>
-            <p className="text-[#2A2A40]/70 font-black mb-10 text-sm uppercase tracking-[0.2em]">GET DROP ALERTS & EXCLUSIVE ACCESS.</p>
+            <p className="text-[#2A2A40]/70 font-black mb-10 text-sm uppercase tracking-[0.2em]">GET REGIONAL DROP ALERTS & EXCLUSIVE ACCESS.</p>
             
             {hasSubscribed ? (
               <div className="bg-white p-8 rounded-none shadow-2xl animate-in zoom-in duration-500 flex flex-col items-center gap-4">
@@ -271,7 +270,7 @@ export default function Home() {
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
                 <h3 className="text-2xl font-black text-[#2A2A40] uppercase">You're in!</h3>
-                <p className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Check your email for the next drop alerts.</p>
+                <p className="text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Check your email for the next regional drop alerts.</p>
               </div>
             ) : (
               <form onSubmit={handleNewsletterSubmit} className="flex gap-2 p-2 bg-white rounded-none shadow-2xl">
@@ -306,7 +305,7 @@ export default function Home() {
                 KREATIONS <span className="text-secondary">254</span>
               </Link>
               <p className="text-white/50 max-w-sm leading-relaxed font-black uppercase text-[10px] tracking-[0.2em]">
-                NAIROBI'S PREMIER FOOTWEAR DESTINATION. IT WILL ALWAYS LOOK GOOD ON YOU.
+                EAST AFRICA'S PREMIERE FOOTWEAR DESTINATION. IT WILL ALWAYS LOOK GOOD ON YOU.
               </p>
               <div className="flex justify-center md:justify-start gap-4">
                 <Button size="icon" variant="outline" className="border-white/10 hover:bg-secondary hover:text-primary hover:border-secondary rounded-xl" asChild>
@@ -321,7 +320,7 @@ export default function Home() {
               <h4 className="font-black text-xl mb-8 uppercase tracking-widest text-secondary">Service</h4>
               <ul className="space-y-4 text-white/50 font-black text-[10px] uppercase tracking-widest">
                 <li><Link href="/help" className="hover:text-white">Help Center</Link></li>
-                <li><Link href="/delivery" className="hover:text-white">Delivery</Link></li>
+                <li><Link href="/delivery" className="hover:text-white">Regional Shipping</Link></li>
                 <li><Link href="/returns" className="hover:text-white">Returns</Link></li>
                 <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
                 <li><Link href="/admin" className="hover:text-secondary font-black">Admin Portal</Link></li>

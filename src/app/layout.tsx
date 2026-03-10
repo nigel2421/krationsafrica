@@ -8,8 +8,8 @@ import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { SecurityDeterrent } from "@/components/security-deterrent";
 
 export const metadata: Metadata = {
-  title: "Kreations Kicks - Ultra Modern Shoe Store",
-  description: "Experience the future of footwear shopping. IT WILL ALWAYS LOOK GOOD ON YOU.",
+  title: "Kreations Kicks - East Africa's Premiere Footwear Store",
+  description: "Experience the future of footwear shopping across Kenya, Uganda, Tanzania, and beyond. IT WILL ALWAYS LOOK GOOD ON YOU.",
 };
 
 export default function RootLayout({
