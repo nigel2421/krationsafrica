@@ -25,46 +25,52 @@ service cloud.firestore {
         'G0QIvRx7N7TSfYk9bIB1wWwkO6E3'
       ];
       
-      return isSignedIn() && (
+      // Check if user is in static lists
+      let isStaticAdmin = isSignedIn() && (
         (request.auth.token.email in adminEmails) || 
-        (request.auth.uid in adminUids) ||
-        (exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin')
+        (request.auth.uid in adminUids)
       );
+
+      // Check if user has admin role in their profile
+      let isDatabaseAdmin = isSignedIn() && 
+        exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.role == 'admin';
+
+      return isStaticAdmin || isDatabaseAdmin;
     }
 
     // --- COLLECTION RULES ---
 
-    // Public access for products and categories (Browsing)
+    // Products and Categories: Fully readable by everyone (guests and users)
     match /products/{productId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
     match /categories/{categoryId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
-    // Newsletter: Public sign-up
+    // Newsletter: Public can subscribe, only admins manage
     match /newsletterSubscriptions/{email} {
       allow create: if true;
       allow get, list, update, delete: if isAdmin();
     }
 
-    // Orders: Anyone can create (checkout), but only admins manage the master list
+    // Orders: Public can create (checkout), only admins manage master list
     match /orders/{orderId} {
       allow create: if true;
       allow get, list, update, delete: if isAdmin();
     }
 
-    // Media: Publicly readable images, admin-only writes
+    // Media: Publicly readable assets
     match /media/{mediaId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
-    // User Profiles: Private by default, accessible by owner or admin
+    // User Profiles: Private access
     match /userProfiles/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
@@ -72,7 +78,7 @@ service cloud.firestore {
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
 
-      // Individual user order history
+      // Orders sub-collection
       match /orders/{orderId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId);
@@ -81,4 +87,4 @@ service cloud.firestore {
     }
   }
 }
-// Rules applied at: 2026-03-06T15:00:00Z
+// Rules redeployed at: 2026-03-10T12:00:00Z
