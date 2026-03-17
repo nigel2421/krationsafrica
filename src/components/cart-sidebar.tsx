@@ -16,7 +16,6 @@ import {
   Truck,
   ShieldAlert,
   MapPinned,
-  CreditCard,
   Building2,
   UserCheck,
   Copy,
@@ -25,7 +24,7 @@ import {
   Mail,
   Globe
 } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
+import { useCart, CartItem } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,7 +129,6 @@ export function CartSidebar() {
     }
   }, []);
 
-  // Reset zone when country changes
   useEffect(() => {
     setSelectedZone("");
   }, [selectedCountry]);
@@ -188,7 +186,7 @@ export function CartSidebar() {
       const normalizedCustomerPhone = normalizePhone(details.phone);
       
       const itemsList = cart
-        .map((item) => `• ${item.name} ${item.size ? `(Size: ${item.size})` : ''} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
+        .map((item: CartItem) => `• ${item.name} ${item.size ? `(Size: ${item.size})` : ''} (x${item.quantity}) - KES ${(item.price * item.quantity).toLocaleString()}`)
         .join("\n");
       
       const orderData = {
@@ -200,7 +198,7 @@ export function CartSidebar() {
         deliveryRegion: zoneLabel,
         deliveryFee: deliveryFee,
         specialNotes: details.notes,
-        items: cart.map(i => `${i.name} ${i.size ? `(EU ${i.size})` : ''} (x${i.quantity})`),
+        items: cart.map((i: CartItem) => `${i.name} ${i.size ? `(EU ${i.size})` : ''} (x${i.quantity})`),
         subtotal: totalPrice,
         totalAmount: grandTotal,
         orderStatus: "Pending",
@@ -285,14 +283,14 @@ export function CartSidebar() {
   const NavigationButtons = () => (
     <div className="flex gap-2 mt-8 pb-10">
       {checkoutStep > 1 && !isSubmitting && (
-        <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep(prev => prev - 1)}>
+        <Button variant="outline" size="icon" className="h-14 w-14 shrink-0 border-2" onClick={() => setCheckoutStep((prev: number) => prev - 1)}>
           <ChevronLeft className="h-6 w-6" />
         </Button>
       )}
       
       {checkoutStep < 4 ? (
         <Button 
-          onClick={() => setCheckoutStep(prev => prev + 1)} 
+          onClick={() => setCheckoutStep((prev: number) => prev + 1)} 
           disabled={cart.length === 0 || (checkoutStep === 2 && deliveryMethod === "delivery" && !selectedZone) || (checkoutStep === 3 && (!details.name || !details.email || !details.phone || (deliveryMethod === "delivery" && !details.location)))}
           className="flex-1 h-14 text-lg font-black uppercase tracking-widest bg-primary"
         >
@@ -345,7 +343,7 @@ export function CartSidebar() {
               ) : (
                 <>
                   <div className="space-y-4">
-                    {cart.map((item) => (
+                    {cart.map((item: CartItem) => (
                       <div key={`${item.id}-${item.size}`} className="flex gap-4 group">
                         <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted border-2 group-hover:border-secondary transition-colors shrink-0">
                           <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
@@ -383,7 +381,7 @@ export function CartSidebar() {
                 <h3 className="font-black text-lg uppercase tracking-tight">Shipping Route</h3>
                 <Globe className="h-5 w-5 text-secondary animate-pulse" />
               </div>
-              <RadioGroup value={deliveryMethod} onValueChange={(v: any) => setDeliveryMethod(v)} className="grid grid-cols-2 gap-4">
+              <RadioGroup value={deliveryMethod} onValueChange={(v: string) => setDeliveryMethod(v as "delivery" | "pickup")} className="grid grid-cols-2 gap-4">
                 <Label className={`flex flex-col items-center justify-center p-4 border-2 rounded-xl cursor-pointer transition-all gap-2 text-center ${deliveryMethod === "delivery" ? "border-secondary bg-secondary/5" : "hover:border-muted-foreground/30 border-muted"}`}>
                   <RadioGroupItem value="delivery" className="sr-only" />
                   <Truck className={`h-6 w-6 ${deliveryMethod === "delivery" ? "text-secondary" : "text-muted-foreground"}`} />
@@ -461,28 +459,28 @@ export function CartSidebar() {
               <div className="grid gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                  <Input placeholder="John Doe" className="border-2 h-12 bg-background focus:ring-secondary" value={details.name} onChange={(e) => setDetails({ ...details, name: e.target.value })} />
+                  <Input placeholder="John Doe" className="border-2 h-12 bg-background focus:ring-secondary" value={details.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetails({ ...details, name: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                    <Input type="email" placeholder="john@example.com" className="pl-10 border-2 h-12 bg-background focus:ring-secondary" value={details.email} onChange={(e) => setDetails({ ...details, email: e.target.value })} />
+                    <Input type="email" placeholder="john@example.com" className="pl-10 border-2 h-12 bg-background focus:ring-secondary" value={details.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetails({ ...details, email: e.target.value })} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active WhatsApp Number</Label>
-                  <Input placeholder="07XXXXXXXX" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} />
+                  <Input placeholder="07XXXXXXXX" className="border-2 h-12 bg-background focus:ring-secondary" value={details.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetails({ ...details, phone: e.target.value })} />
                 </div>
                 {deliveryMethod === "delivery" && (
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Physical Delivery Address</Label>
-                    <Input placeholder="City, Street, Apartment/House No." className="border-2 h-12 bg-background focus:ring-secondary" value={details.location} onChange={(e) => setDetails({ ...details, location: e.target.value })} />
+                    <Input placeholder="City, Street, Apartment/House No." className="border-2 h-12 bg-background focus:ring-secondary" value={details.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetails({ ...details, location: e.target.value })} />
                   </div>
                 )}
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Additional Notes</Label>
-                  <Textarea placeholder="Any specific instructions for our regional carriers?" className="border-2 bg-background focus:ring-secondary" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} />
+                  <Textarea placeholder="Any specific instructions for our regional carriers?" className="border-2 bg-background focus:ring-secondary" value={details.notes} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDetails({ ...details, notes: e.target.value })} />
                 </div>
               </div>
               <OrderSummary />
@@ -564,7 +562,7 @@ export function CartSidebar() {
                     <Checkbox 
                       id="terms" 
                       checked={acceptedTerms} 
-                      onCheckedChange={(v) => setAcceptedTerms(!!v)}
+                      onCheckedChange={(v: boolean | "indeterminate") => setAcceptedTerms(!!v)}
                       className="h-5 w-5 rounded-full border-2"
                     />
                   </div>

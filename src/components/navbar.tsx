@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, Menu, Heart, Sun, Moon, LayoutDashboard } from "lucide-react";
+import { ShoppingBag, Menu, Heart, Sun, Moon, LayoutDashboard, Search } from "lucide-react";
+import { SearchBar } from "@/components/search-bar";
 import { useCart } from "@/hooks/use-cart";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { Button } from "@/components/ui/button";
@@ -53,16 +54,19 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="text-2xl font-black tracking-tighter text-primary dark:text-foreground">
+        <div className="flex items-center gap-8 flex-1">
+          <Link href="/" className="text-2xl font-black tracking-tighter text-primary dark:text-foreground shrink-0">
             KREATIONS <span className="text-secondary">254</span>
           </Link>
-          <div className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-[0.2em] items-center">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-colors hover:text-secondary">
+              <Link key={link.href} href={link.href} className="transition-colors hover:text-secondary whitespace-nowrap">
                 {link.label}
               </Link>
             ))}
+          </div>
+          <div className="hidden lg:flex flex-1 justify-center max-w-md mx-auto">
+            <SearchBar />
           </div>
         </div>
 
@@ -145,7 +149,10 @@ export function Navbar() {
                   Always Look Good On You
                 </SheetDescription>
               </SheetHeader>
-              <div className="flex-1 px-6 py-8 space-y-2">
+              <div className="px-6 py-4 border-b">
+                <SearchBar className="max-w-none" />
+              </div>
+              <div className="flex-1 px-6 py-8 space-y-2 overflow-y-auto">
                 {navLinks.map((link) => (
                   <Link 
                     key={link.href} 

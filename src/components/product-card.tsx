@@ -113,7 +113,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="flex flex-1 flex-col p-6">
         <Link href={`/product/${product.slug}`} className="block group/link">
           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{product.brand || 'Premium'}</span>
-          <h3 className="font-black text-xl text-primary leading-tight mt-1 line-clamp-1 uppercase tracking-tighter group-hover/link:text-secondary transition-colors">{product.name}</h3>
+          <h3 className="font-black text-xl text-foreground leading-tight mt-1 line-clamp-1 uppercase tracking-tighter group-hover/link:text-secondary transition-colors">{product.name}</h3>
         </Link>
         
         <div className="mt-auto flex items-center justify-between gap-4 pt-4 border-t border-muted">
@@ -136,10 +136,12 @@ export function ProductCard({ product }: ProductCardProps) {
             disabled={isOutOfStock}
             className={cn(
               "h-12 w-12 rounded-full transition-all shrink-0 border-2",
-              added ? "bg-green-500 border-green-500 hover:bg-green-600" : "bg-primary border-primary hover:bg-primary/90"
+              added 
+                ? "bg-green-500 border-green-500 hover:bg-green-600" 
+                : "bg-primary border-primary hover:bg-primary/90"
             )}
           >
-            {added ? <Check className="h-6 w-6 text-white" /> : <ShoppingCart className="h-6 w-6 text-white" />}
+            {added ? <Check className="h-6 w-6 text-primary-foreground" /> : <ShoppingCart className="h-6 w-6 text-primary-foreground" />}
           </Button>
         </div>
       </div>

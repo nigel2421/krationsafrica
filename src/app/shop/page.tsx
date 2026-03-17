@@ -4,7 +4,7 @@
 import React, { useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, where } from "firebase/firestore";
+import { collection, query, orderBy, where, limit } from "firebase/firestore";
 import { ProductCard } from "@/components/product-card";
 import { Loader2, SlidersHorizontal, ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,18 +20,29 @@ function ShopContent() {
   
   const categoryFilter = searchParams.get("category");
   const genderFilter = searchParams.get("gender");
+  const searchFilter = searchParams.get("search");
 
   const productsQuery = useMemoFirebase(() => {
     if (!db) return null;
+    
     let q = query(collection(db, "products"), orderBy("createdAt", "desc"));
     
-    if (categoryFilter) {
+    if (searchFilter) {
+      // Basic Firestore search logic: prefix match
+      const searchStr = searchFilter.charAt(0).toUpperCase() + searchFilter.slice(1);
+      q = query(
+        collection(db, "products"), 
+        where("name", ">=", searchStr),
+        where("name", "<=", searchStr + "\uf8ff"),
+        limit(50)
+      );
+    } else if (categoryFilter) {
       const capitalized = categoryFilter.charAt(0).toUpperCase() + categoryFilter.slice(1);
       q = query(collection(db, "products"), where("category", "==", capitalized), orderBy("createdAt", "desc"));
     }
     
     return q;
-  }, [db, categoryFilter]);
+  }, [db, categoryFilter, searchFilter]);
 
   const { data: products, isLoading } = useCollection(productsQuery);
 
@@ -48,15 +59,15 @@ function ShopContent() {
       {/* Header */}
       <div className="bg-primary py-16 mb-12">
         <div className="container mx-auto px-4">
-          <Button asChild variant="link" className="text-white/50 p-0 mb-4 hover:text-secondary h-auto">
+          <Button asChild variant="link" className="text-primary-foreground/50 p-0 mb-4 hover:text-secondary h-auto">
             <Link href="/"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
           </Button>
-          <h1 className="text-6xl font-black text-white uppercase tracking-tighter mb-4">
-            {categoryFilter || "All Collection"}
+          <h1 className="text-6xl font-black text-primary-foreground uppercase tracking-tighter mb-4">
+            {searchFilter ? `Search: ${searchFilter}` : (categoryFilter || "All Collection")}
           </h1>
           <div className="flex gap-2">
-            <Badge variant="secondary" className="px-4 py-1 font-bold uppercase tracking-widest">
-              {filteredProducts?.length || 0} Styles Found
+            <Badge variant="secondary" className="px-4 py-1 font-bold uppercase tracking-widest bg-secondary text-secondary-foreground">
+              {filteredProducts?.length || 0} {searchFilter ? 'Matches' : 'Styles'} Found
             </Badge>
           </div>
         </div>
