@@ -43,12 +43,12 @@ service cloud.firestore {
 
     // Products and Categories: Globally readable for storefront
     match /products/{productId} {
-      allow get, list: if true;
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /categories/{categoryId} {
-      allow get, list: if true;
+      allow read: if true;
       allow write: if isAdmin();
     }
 

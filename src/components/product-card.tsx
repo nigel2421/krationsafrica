@@ -93,7 +93,7 @@ export function ProductCard({ product }: ProductCardProps) {
               variant="ghost" 
               size="icon" 
               className={cn(
-                "rounded-full bg-white/50 backdrop-blur-md shadow-md hover:bg-white transition-all",
+                "rounded-full bg-background/50 backdrop-blur-md shadow-md hover:bg-background transition-all border",
                 inWishlist && "text-destructive"
               )}
               onClick={toggleWishlist}
@@ -103,7 +103,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
 
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <div className="bg-white text-primary font-black px-6 py-3 rounded-none uppercase text-xs tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
+            <div className="bg-primary text-primary-foreground font-black px-6 py-3 rounded-none uppercase text-xs tracking-widest flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
               View Details <ArrowRight className="h-4 w-4" />
             </div>
           </div>

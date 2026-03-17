@@ -60,7 +60,11 @@ export function Navbar() {
           </Link>
           <div className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-[0.2em] items-center">
             {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="transition-colors hover:text-secondary whitespace-nowrap">
+              <Link 
+                key={link.href} 
+                href={link.href} 
+                className="text-foreground/70 transition-colors hover:text-secondary dark:hover:text-secondary whitespace-nowrap"
+              >
                 {link.label}
               </Link>
             ))}
@@ -157,7 +161,7 @@ export function Navbar() {
                   <Link 
                     key={link.href} 
                     href={link.href} 
-                    className="block text-xl font-black uppercase tracking-tighter py-4 border-b border-muted/50 hover:text-secondary transition-colors"
+                    className="block text-xl font-black uppercase tracking-tighter py-4 border-b border-muted/50 text-foreground hover:text-secondary transition-colors"
                   >
                     {link.label}
                   </Link>

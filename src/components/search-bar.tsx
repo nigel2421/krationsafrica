@@ -123,9 +123,9 @@ export function SearchBar({ className }: { className?: string }) {
           {searchQuery && (
             <button
               onClick={() => handleSearch()}
-              className="w-full p-3 bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:bg-black transition-colors flex items-center justify-center gap-2"
+              className="w-full p-3 bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:bg-black/90 transition-colors flex items-center justify-center gap-2"
             >
-              See all results for "{searchQuery}" <ArrowRight className="h-4 w-4 text-secondary" />
+              See all results for "{searchQuery}" <ArrowRight className="h-4 w-4" />
             </button>
           )}
         </div>
